@@ -17,8 +17,7 @@ library(caTools)
 library(plyr)
 library(e1071)
 
-updateR()
-
+#updateR()
 
 data = data.frame(read.csv("creditcard.csv",header=TRUE,sep=","))
 
@@ -46,6 +45,17 @@ test_set[-31] = scale(test_set[-31])
     y_pred = predict(classifier, newdata = test_set[,-31])
     (confusion = table(test_set[,31],y_pred))
     (exactitude = sum(diag(confusion))/sum(confusion))
+
+
+
+# Hyperparameters optimization
+tuneResult <- tune(svm, Class ~ .,  data = training_set,
+              ranges = list(epsilon = seq(0,1,0.1), cost = 2^(2:9)))
+print(tuneResult)
+# Draw the tuning graph
+plot(tuneResult)
+
+
 
 
 # kernel = polynomial : 
