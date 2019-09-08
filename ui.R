@@ -14,7 +14,7 @@ shinyUI(fluidPage(
 
     # Application title
     titlePanel("Test déploiement Travis - ShinyApps.io"),
-    shiny::tags$p("Ce déploiement est entièrement réalisé par un job Travis !", style = "color:red;"),
+    shiny::tags$p("Ce déploiement est entièrement réalisé par un job Travis !", style = "color:blue;"),
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
