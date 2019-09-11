@@ -3,36 +3,12 @@
 
 rm(list=ls())
 
+
+source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
+
 getwd()
 setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
 
-
-
-install.packages("drat", repos="https://cran.rstudio.com")
-install.packages("xgboost")
-install.packages("tidyverse")
-install.packages("microbenchmark")
-install.packages("pROC")
-
-library(ROCR)
-library(microbenchmark)
-library(caret)
-library(plotROC)
-library(ggplot2)
-library(reshape2)
-library(DMwR)
-library(PRROC)
-library(gmodels)
-library(rpart)
-library(installr)
-library(caTools)
-library(plyr)
-library(e1071)
-library(pROC)
-
-library(tidyverse)
-library(xgboost)
-library(caret)
 
 
 credit.card.data = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))

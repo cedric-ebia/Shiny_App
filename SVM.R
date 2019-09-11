@@ -7,35 +7,12 @@
 
 rm(list=ls())
 
+source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
+
 getwd()
 setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
 
-install.packages("caret", repos = "http://cran.us.r-project.org")
-install.packages("plotROC", repos = "http://cran.us.r-project.org")
-install.packages("ggplot2", repos = "http://cran.us.r-project.org")
-install.packages("reshape2", repos = "http://cran.us.r-project.org")
-install.packages("DMwR", repos = "http://cran.us.r-project.org")
-install.packages("PRROC", repos = "http://cran.us.r-project.org")
-install.packages("gmodels", repos = "http://cran.us.r-project.org") 
-install.packages("rpart", repos = "http://cran.us.r-project.org") 
-install.packages("installr", repos = "http://cran.us.r-project.org")
-install.packages("caTools", repos = "http://cran.us.r-project.org") 
-install.packages("plyr", repos = "http://cran.us.r-project.org")
-install.packages("e1071", repos = "http://cran.us.r-project.org")
 
-
-library(caret)
-library(plotROC)
-library(ggplot2)
-library(reshape2)
-library(DMwR)
-library(PRROC)
-library(gmodels)
-library(rpart)
-library(installr)
-library(caTools)
-library(plyr)
-library(e1071)
 
 #updateR()
 
@@ -287,8 +264,6 @@ fun.auc.ggplot <- function (ModelPred, ModelProb, ModelCible, Title = '', echant
   basicplot
 }
 
-install.packages("kernlab", repos = "http://cran.us.r-project.org") 
-library(kernlab)
 
 
 model <- ksvm(Class~., data=training_set, prob.model=T , kernel = "rbfdot", C=2)

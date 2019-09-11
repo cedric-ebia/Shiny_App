@@ -3,6 +3,10 @@
 
 rm(list=ls())
 
+
+
+source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
+
 getwd()
 setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
 
