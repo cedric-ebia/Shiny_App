@@ -1,5 +1,6 @@
 ### XGBOOST 
 
+
 rm(list=ls())
 
 getwd()
@@ -35,7 +36,8 @@ library(caret)
 
 
 credit.card.data = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
-data = data[,-c(1,30)] 
+attach(credit.card.data)
+credit.card.data = credit.card.data[,-c(1,30)] 
 
 set.seed(1337) 
 train.test.split <- sample(2
@@ -44,6 +46,7 @@ train.test.split <- sample(2
                     , prob = c(0.7, 0.3))
 train = credit.card.data[train.test.split == 1,]
 test = credit.card.data[train.test.split == 2,]
+
 
 xgb.data.train <- xgb.DMatrix(as.matrix(train[, colnames(train) != "Class"]), label = train$Class)
 xgb.data.test <- xgb.DMatrix(as.matrix(test[, colnames(test) != "Class"]), label = test$Class)
@@ -58,7 +61,7 @@ xgb.model <- xgb.train(data = xgb.data.train
 			, nthread = 3
 			, eval_metric = "auc"
 			)
-		, watchlist = list(test = xgb.data.test)
+		, watchlist = list(train = xgb.data.train,test = xgb.data.test)
 		, nrounds = 500
 		, early_stopping_rounds = 40
 		, print_every_n = 20
@@ -74,6 +77,13 @@ auc.xgb = roc(test$Class, xgb.test, plot = TRUE, col = "blue")
 print(auc.xgb)
 
 
+
+#### Evaluate The Model's Performance With A Confusion Matrix
+pred.resp <- ifelse(xgb.test >= 0.5, 1, 0)
+# Create the confusion matrix
+credit.class.factor = factor(test$Class,c(0,1))
+pred.resp = as.integer(pred.resp)
+confusionMatrix(table(pred.resp, credit.class.factor), positive="1") #EHHH NOT GOOD
 
 # Get the trained model
 model <- xgb.dump(xgb.model, with_stats=TRUE)
@@ -117,7 +127,7 @@ xgb.model.acc.deeper <- xgb.train(data = xgb.data.train
 			, nthread = 3
 			, eval_metric = "auc"
 			)
-		, watchlist = list(test = xgb.data.test)
+		, watchlist = list(train = xgb.data.train, test = xgb.data.test)
 		, nrounds = 500
 		, early_stopping_rounds = 40
 		, print_every_n = 20
@@ -137,6 +147,19 @@ xgb.test.acc.deeper = predict(xgb.model.acc.deeper
 
 auc.xgb.acc.deeper = roc(test$Class, xgb.test.acc.deeper, plot = TRUE, col = "blue")
 print(auc.xgb.acc.deeper)
+
+
+
+
+
+#### Evaluate The Model's Performance With A Confusion Matrix
+pred.resp.acc.deeper <- ifelse(xgb.test.acc.deeper >= 0.5, 1, 0)
+# Create the confusion matrix
+credit.class.factor = factor(test$Class,c(0,1))
+pred.resp.acc.deeper = as.integer(pred.resp.acc.deeper)
+confusionMatrix(table(pred.resp.acc.deeper, credit.class.factor), positive="1") #EHHH NOT GOOD
+
+
 
 
 
