@@ -22,6 +22,14 @@
 #install.packages("DMwR", repos = "http://cran.us.r-project.org")
 #install.packages("rsconnect", repos = "http://cran.us.r-project.org")
 #install.packages("kernlab", repos = "http://cran.us.r-project.org")
+#install.packages("Rtsne", repos = "http://cran.us.r-project.org")
+#install.packages("data.table", repos = "http://cran.us.r-project.org")
+#install.packages("dplyr", repos = "http://cran.us.r-project.org")
+#install.packages("magrittr", repos = "http://cran.us.r-project.org")
+#install.packages("plotly", repos = "http://cran.us.r-project.org")
+#install.packages("ggthemes", repos = "http://cran.us.r-project.org")
+
+
 
 library(kernlab)
 library(pROC)
@@ -45,6 +53,13 @@ library(xgboost)
 library(caret)
 library(class)
 library(DMwR)
+library(Rtsne)
+library(data.table)
+library(dplyr)
+library(magrittr)
+library(plotly)
+library(ggthemes)
+
 
 
 

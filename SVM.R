@@ -7,10 +7,13 @@
 
 rm(list=ls())
 
-source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
+
+
+#source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
+source("/Users/PALMALOIC/Desktop/Shiny_App/libraries.r")
 
 getwd()
-setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
+#setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
 
 
 
@@ -25,7 +28,46 @@ summary(data) # Variable are standardised
 print(table(data$Class))
 print(prop.table(table(data$Class))) # At 5%, this is clearly a skewed data set, aka rare event.
 
+# computing weight_cost:
+costs <- table(data$Class)  # the weight vector must be named with the classes names
+costs[1] <- 1 # a class 0 mismatch not so much...
+costs[2] <- 1e5 #a class -1 mismatch has a terrible cost
+costs
 
+cut =  data[1:100000,]
+split = sample.split(cut$Class, SplitRatio = 0.10) 
+training_set = subset(cut, split == TRUE) 
+test_set = subset(cut, split == FALSE)
+classifier = svm(formula = Class ~ ., 
+                 data = training_set, 
+                 type = 'C-classification', 
+                 kernel = 'linear',
+                 probability = TRUE,
+                 class.weights = costs,
+                 scale = FALSE,
+                 cross = 5) 
+system.time(svm(formula = Class ~ ., 
+                data = training_set, 
+                type = 'C-classification', 
+                kernel = 'linear',
+                probability = TRUE,
+                class.weights = costs,
+                scale = FALSE,
+                cross = 5))
+summary(classifier)
+y_pred = predict(classifier, newdata = test_set[,-29], probability = TRUE)
+pred = predict(classifier,test_set,probability = TRUE)
+(CrossTable(test_set[,29],y_pred,prop.chisq = FALSE))
+
+auc(y_pred,test_set[,29])
+fg <- pred[test_set$Class == 1]
+bg <- pred[test_set$Class == 0]
+# ROC Curve    
+roc <- roc.curve(scores.class0 = fg, scores.class1 = bg, curve = T, sorted = FALSE)
+plot(roc)
+# PR Curve
+pr <- pr.curve(scores.class0 = bg, scores.class1 = fg ,  curve = T, sorted = FALSE)
+plot(pr)
 
 
 nmiss <- function(x) {
@@ -34,43 +76,12 @@ nmiss <- function(x) {
 apply(data,2,nmiss) # No missing value
 
 #Correlation matrix
-suppressMessages(library(reshape2))
-
-corrmatrice<- round(cor(data[, c(1:29)]),2)
-hc <- hclust(as.dist((1-corrmatrice)/2))
-cormat <- corrmatrice[hc$order, hc$order]
-cormat[lower.tri(cormat)]<-NA
-melted_cormat <- melt(cormat, na.rm = TRUE)
-ggheatmap <- ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
-  geom_tile(color = "white")+
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-    midpoint = 0, limit = c(-1,1), space = "Lab",
-    name="Pearson\nCorrelation") +
-   theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-     size = 12, hjust = 1))+
-  coord_fixed()
- 
-ggheatmap +
- geom_text(aes(Var2,Var1,label=value),color="black",size=4) +
- theme(
-   axis.title.x = element_blank(),
-   axis.title.y = element_blank(),
-   panel.grid.major = element_blank(),
-   panel.border = element_blank(),
-   panel.background = element_blank(),
-   axis.ticks = element_blank(),
-   legend.justification = c(1, 0),
-   legend.position = c(0.6, 0.7),
-   legend.direction = "horizontal")+
-   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
-                 title.position = "top", title.hjust = 0.5))
-
-
-# The Target Distribution
-ggplot() + 
-  geom_histogram(data = data, mapping = aes(Class) , color='red' , alpha=.4, stat="count")
-
+corr <- round(cor(data), 1)
+head(corr[, 1:6])
+p.mat <- cor_pmat(data)
+head(p.mat[, 1:4])
+quartz()
+ggcorrplot(corr)
 
 
 # WHAT TO DO WITH TIME ???
