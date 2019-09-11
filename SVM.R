@@ -10,6 +10,8 @@ rm(list=ls())
 getwd()
 setwd("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM")
 
+install.packages("caret", repos = "http://cran.us.r-project.org")
+install.packages("plotROC", repos = "http://cran.us.r-project.org")
 install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 install.packages("reshape2", repos = "http://cran.us.r-project.org")
 install.packages("DMwR", repos = "http://cran.us.r-project.org")
@@ -21,6 +23,9 @@ install.packages("caTools", repos = "http://cran.us.r-project.org")
 install.packages("plyr", repos = "http://cran.us.r-project.org")
 install.packages("e1071", repos = "http://cran.us.r-project.org")
 
+
+library(caret)
+library(plotROC)
 library(ggplot2)
 library(reshape2)
 library(DMwR)
@@ -80,6 +85,12 @@ ggheatmap +
                  title.position = "top", title.hjust = 0.5))
 
 
+# The Target Distribution
+ggplot() + 
+  geom_histogram(data = data, mapping = aes(Class) , color='red' , alpha=.4, stat="count")
+
+
+
 # WHAT TO DO WITH TIME ???
 data$Class[data$Class == 1] = 1
 data$Class[data$Class == 0] = -1
@@ -104,16 +115,21 @@ table(newcard$Class)
                     type = 'C-classification', 
                     kernel = 'linear',
                     probability = TRUE) 
+    system.time(svm(formula = Class ~ ., 
+                    data = training_set, 
+                    type = 'C-classification', 
+                    kernel = 'linear',
+                    probability = TRUE) )
     summary(classifier)
-    y_pred = predict(classifier, newdata = test_set[,-30], probability = TRUE)
+    y_pred = predict(classifier, newdata = test_set[,-29], probability = TRUE)
     pred = predict(classifier,test_set,probability = TRUE)
-    (CrossTable(test_set[,31],y_pred,prop.chisq = FALSE)) #CrossTable is shit for classification with unbalanced distribution.
+    (CrossTable(test_set[,29],y_pred,prop.chisq = FALSE)) #CrossTable is shit for classification with unbalanced distribution.
     probs = head(attr(pred,"probabilities"))
     probs
 fg <- probs[ , 2]
 bg <- probs[ , 1]
 # ROC Curve    
-roc <- roc.curve(scores.class0 = -probs[,1], scores.class1 = -probs[,2], curve = T)
+roc <- roc.curve(scores.class0 = probs[,1], scores.class1 = probs[,2], curve = T)
 plot(roc)
 # PR Curve
 pr <- pr.curve(scores.class0 = -probs[,1], scores.class1 =  -probs[,2], curve = T, sorted = FALSE)
@@ -134,42 +150,148 @@ plot(tuneResult)
     classifier = svm(formula = Class ~ ., 
                     data = training_set, 
                     type = 'C-classification', 
-                    kernel = 'polynomial') 
+                    kernel = 'polynomial',
+                    probability = TRUE) 
+    system.time(svm(formula = Class ~ ., 
+                    data = training_set, 
+                    type = 'C-classification', 
+                    kernel = 'polynomial',
+                    probability = TRUE))
 
+    y_pred = predict(classifier, newdata = test_set[,-29])
+    (CrossTable(test_set[,29],y_pred,prop.chisq = FALSE)) #CrossTable is shit for classification with unbalanced distribution.
+    pred = predict(classifier,test_set, probability = TRUE)
 
-    y_pred = predict(classifier, newdata = test_set[,-30])
-    (confusion = table(test_set[,30],y_pred))
-    (exactitude = sum(diag(confusion))/sum(confusion))
+    probs = head(attr(pred,"probabilities"))
+    probs
+fg <- probs[ , 2]
+bg <- probs[ , 1]
+# ROC Curve    
+roc <- roc.curve(scores.class0 = probs[,1], scores.class1 = probs[,2], curve = T)
+plot(roc)
+# PR Curve
+pr <- pr.curve(scores.class0 = -probs[,1], scores.class1 =  -probs[,2], curve = T, sorted = FALSE)
+plot(pr)
 
 # kernel = radial basis : 
     classifier = svm(formula = Class ~ ., 
                     data = training_set, 
                     type = 'C-classification', 
-                    kernel = 'radial basis')
-    (exactitude = sum(diag(confusion))/sum(confusion)) 
+                    kernel = 'radial',
+                    probability = TRUE)
+    system.time(svm(formula = Class ~ ., 
+                    data = training_set, 
+                    type = 'C-classification', 
+                    kernel = 'radial',
+                    probability = TRUE))
 
 
-    y_pred = predict(classifier, newdata = test_set[,-30])
-    (confusion = table(test_set[,30],y_pred))
-    (exactitude = sum(diag(confusion))/sum(confusion))
+    y_pred = predict(classifier, newdata = test_set[,-29])
+    (CrossTable(test_set[,29],y_pred,prop.chisq = FALSE)) #CrossTable is shit for classification with unbalanced distribution.
+
+    pred = predict(classifier,test_set, probability = TRUE)
+    probs = head(attr(pred,"probabilities"))
+    probs
+fg <- probs[ , 2]
+bg <- probs[ , 1]
+# ROC Curve    
+roc <- roc.curve(scores.class0 = probs[,1], scores.class1 = probs[,2], curve = T)
+plot(roc)
+# PR Curve
+pr <- pr.curve(scores.class0 = -probs[,1], scores.class1 =  -probs[,2], curve = T, sorted = FALSE)
+plot(pr)
 
 # kernel = sigmoid : 
     classifier = svm(formula = Class ~ ., 
                     data = training_set, 
                     type = 'C-classification', 
-                    kernel = 'sigmoid') 
-    y_pred = predict(classifier, newdata = test_set[,-30])
-    (confusion = table(test_set[,30],y_pred)) #Very bad 
-    (exactitude = sum(diag(confusion))/sum(confusion))
+                    kernel = 'sigmoid',
+                    probability = TRUE) 
+    system.time(svm(formula = Class ~ ., 
+                    data = training_set, 
+                    type = 'C-classification', 
+                    kernel = 'sigmoid',
+                    probability = TRUE) )
+     y_pred = predict(classifier, newdata = test_set[,-29], probability = TRUE)
+    (CrossTable(test_set[,29],y_pred,prop.chisq = FALSE)) #CrossTable is shit for classification with unbalanced distribution.
+
+
+    pred = predict(classifier,test_set, probability = TRUE)
+    probs = head(attr(pred,"probabilities"))
+    probs
+fg <- probs[ , 2]
+bg <- probs[ , 1]
+# ROC Curve    
+roc <- roc.curve(scores.class0 = probs[,1], scores.class1 = probs[,2], curve = T)
+plot(roc)
+# PR Curve
+pr <- pr.curve(scores.class0 = -probs[,1], scores.class1 =  -probs[,2], curve = T, sorted = FALSE)
+plot(pr)
 
 
 
 
 
+##################################### TEST AUC #######################################
 
 
+donneesModelROCALL <- NULL
+MatriceConfusion <- data.frame()
+fun.auc.ggplot <- function (ModelPred, ModelProb, ModelCible, Title = '', echantillon = '', df = donneesModelROCALL){
+
+  donneesModel <- data.frame(Cible = as.integer(ModelCible), 
+                             Cible.Nom = as.character(ModelCible),
+                             ModelProb = ModelProb)
+  
+  basicplot <- ggplot(donneesModel, aes(d = Cible, m = ModelProb)) + 
+                   geom_roc(n.cuts = 50, labelsize = 3, labelround = 4)
+
+  basicplot<- basicplot  +
+    style_roc(xlab='Le taux de faux Positifs(1 - Specificity)',
+              ylab='Le taux de vrais positifs(Sensitivity)',
+              theme = theme_grey)+
+    annotate("text",x=0.5,y=0.5,
+              label="AUC <= 0.5 prédiction pire qu'au hasard",
+              color="red",size=6, angle=45) +
+    ggtitle( paste('Surface sous courbe ROC (AUC) : ',round(calc_auc(basicplot)$AUC,8),"% --",Title)) + 
+    coord_fixed(ratio = 1)
+
+  donneesModel$Label <- rep(paste(Title," : ",round(calc_auc(basicplot)$AUC,4),"%"),length(ModelCible))
+  donneesModel$Echantillon <- echantillon
+
+  matconf <- caret::confusionMatrix(ModelPred, ModelCible,mode="everything")
+  
+  MatriceConfusion <<- rbind( MatriceConfusion,
+                              data.frame(Nom=Title,
+                                         AUC        =calc_auc(basicplot)$AUC,
+                                         Accuracy   =matconf$overall[1],
+                                         Kappa      =matconf$overall[2], 
+                                         VP         =matconf$table[1,1],
+                                         FP         =matconf$table[1,2],
+                                         VN         =matconf$table[2,2],
+                                         FN         =matconf$table[2,1],
+                                         Sensitivity=matconf$byClass[1],  
+                                         Specificity=matconf$byClass[2],
+                                         Precision  =matconf$byClass[5],
+                                         FScore1    =matconf$byClass[7],
+                                         Prevalence =matconf$byClass[8],
+                                         PPV        =matconf$byClass[3], 
+                                         NPV        =matconf$byClass[4],
+                                         row.names =NULL))
+
+  donneesModelROCALL <<- rbind(df,donneesModel)
+
+  basicplot
+}
+
+install.packages("kernlab", repos = "http://cran.us.r-project.org") 
+library(kernlab)
 
 
-
-
-
+model <- ksvm(Class~., data=training_set, prob.model=T , kernel = "rbfdot", C=2)
+prediction <- predict(model, test_set[,-29], type="response")
+prediction.probabilites <- predict(model, test_set[,-29], type="probabilities")
+fun.auc.ggplot(prediction,
+               prediction.probabilites[,2], 
+               test_set$Class,
+               paste('Support Vector Machine Radial-'))
