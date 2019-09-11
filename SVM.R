@@ -45,6 +45,11 @@ data = data[,-c(1,30)]
 str(data)
 summary(data) # Variable are standardised
 
+print(table(data$Class))
+print(prop.table(table(data$Class))) # At 5%, this is clearly a skewed data set, aka rare event.
+
+
+
 
 nmiss <- function(x) {
   return(sum(is.na(x)))
@@ -103,10 +108,8 @@ split = sample.split(cut$Class, SplitRatio = 0.75)
 training_set = subset(cut, split == TRUE) 
 test_set = subset(cut, split == FALSE)
 
-
-newcard<-SMOTE(Class ~ .,training_set,perc.over=10000, perc.under=101)
-table(newcard$Class)
-
+print(prop.table(table(training_set$Class)))  #"We keep the same prop so it is fine"
+print(prop.table(table(test_set$Class)))      #"We keep the same prop so it is fine"
 
 
 # kernel = linear : 
@@ -295,3 +298,7 @@ fun.auc.ggplot(prediction,
                prediction.probabilites[,2], 
                test_set$Class,
                paste('Support Vector Machine Radial-'))
+
+
+################################################## LOGIT REG #############################################
+
