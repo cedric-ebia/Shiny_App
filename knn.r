@@ -2,6 +2,65 @@
 
 rm(list=ls())
 
+library(reshape2)
+df = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df$Class <- factor(df$Class)
+df <- df[,2:31]
+
+df_summarised <- df %>% 
+  group_by(Class) %>% 
+  summarise(amount_mean = mean(Amount), amount_median = median(Amount)) #medias y medianas no concuerdan
+df_summarised <- melt(df_summarised,id.vars = "Class", measure.vars = c("amount_mean","amount_median"))
+
+# Same as before but for Principal Component variables
+df_reshaped <- melt(df,id.vars = "Class", measure.vars = colnames(df)[c(-29,-30)])
+
+df_pc_summary <- df_reshaped %>%
+  group_by(Class,variable) %>% 
+  summarise(mean = mean(value), median = median(value))
+df_pc_summary <- melt(df_pc_summary,id.vars = c("Class","variable"), measure.vars = c("mean","median"))
+colnames(df_pc_summary) <- c("Class","variable","Stat","Value")
+
+# Distribution of the Amount variable
+ggplot(df, aes(Amount, fill = Class) ) + 
+  geom_density(alpha = 0.5,  col = "black") +
+  geom_vline( 
+    data = df_summarised,
+    aes(colour = Class,linetype = variable, xintercept=value),
+    show.legend = TRUE
+  ) +
+  scale_fill_discrete(labels = c("Regular", "Fraud"))+
+  scale_linetype_discrete(labels = c(amount_mean = "mean", amount_median = "median") ) +
+  scale_color_discrete(breaks = NULL) +
+  xlim(0,400) +
+  labs(linetype = "Stats",
+       title = "Density distribution of both classes",
+       caption = "*x axis limited at 400\nfor better visualization",
+       subtitle = "both classes come from diferent distributions")  +
+  theme(
+    axis.title.y = element_blank(),
+    plot.caption = element_text(margin = margin(t = 15), color = "gray30", size = 10)
+  )
+
+
+# Plotting the distribution of PC variables 
+ggplot(df_reshaped, aes(x = value, fill = Class) ) + 
+  geom_density(alpha = 0.5,  col = "black") +
+  geom_vline( 
+    data = df_pc_summary,
+    aes(colour = Class,linetype = Stat, xintercept=Value),
+    show.legend = TRUE
+  ) +
+  facet_wrap("variable", ncol = 4, nrow = 7, scales = "free_y") +
+  xlim(-5,5) +
+  scale_fill_discrete(labels = c("Regular", "Fraud")) +
+  scale_color_discrete(breaks = NULL) +
+  labs(title = "Density Distribution for each PC variable",
+       subtitle = "Mostly, they come from different distributions")+
+  theme (
+    axis.title.y = element_blank()
+  )
+
 source("C:/Users/theloloboss/Desktop/M2 ESA/Projet_SVM/libraries.R")
 
 getwd()
@@ -13,7 +72,6 @@ credit.card.data = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quo
 
 
 attach(credit.card.data)
-credit.card.data = credit.card.data[1:100000,-c(1,30)] 
 
 set.seed(1337) 
 train.test.split <- sample(2

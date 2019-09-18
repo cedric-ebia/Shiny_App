@@ -17,11 +17,11 @@ credit.card.data = credit.card.data[,-c(1,30)]
 
 set.seed(1337) 
 train.test.split <- sample(2
-                    , nrow(credit.card.data)
+                    , nrow(df)
                     , replace = TRUE
                     , prob = c(0.7, 0.3))
-train = credit.card.data[train.test.split == 1,]
-test = credit.card.data[train.test.split == 2,]
+train_smote = credit.card.data[train.test.split == 1,]
+test_smote = credit.card.data[train.test.split == 2,]
 
 
 library(DMwR)

@@ -18,7 +18,7 @@ data %<>%
 names(data) <- gsub('V', 'Feat', names(data))
 
 numeric_interesting_features <- c(paste0('Feat', 1:28),'Amount') 
-# "Class", the target, is not used to compute the 2D coordinates
+# "#Class", the target, is not used to compute the 2D coordinates
 
 
 data <- data[ apply(data, MARGIN = 1, FUN = function(x) !any(is.na(x))), ]
@@ -44,7 +44,7 @@ data_sub <- df_normalised %>%
   rbind(data_fraud)
 
 rtsne_out <- Rtsne(as.matrix(select(data_sub, -id)), pca = FALSE, verbose = TRUE,
-                   theta = 0.3, max_iter = 1300, Y_init = NULL)
+                   theta = 0.3, max_iter = 1300, Y_init = NULL, check_duplicates =FALSE)
 # "Class", the target, is not used to compute the 2D coordinates
 
 

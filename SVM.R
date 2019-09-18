@@ -21,9 +21,11 @@ getwd()
 
 data = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
 attach(data)
-data = data[,-c(1,30)] 
 str(data)
 summary(data) # Variable are standardised
+
+correlations <- cor(data,method="pearson")
+corrplot(correlations, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
 
 print(table(data$Class))
 print(prop.table(table(data$Class))) # At 5%, this is clearly a skewed data set, aka rare event.
@@ -86,10 +88,10 @@ ggcorrplot(corr)
 
 # WHAT TO DO WITH TIME ???
 data$Class[data$Class == 1] = 1
-data$Class[data$Class == 0] = -1
+data$Class[data$Class == 0] = 0
 
 cut =  data[1:50000,]
-cut$Class = factor(cut$Class,level = c(1,-1))
+cut$Class = factor(cut$Class,level = c(1,0))
 
 set.seed(1337) 
 split = sample.split(cut$Class, SplitRatio = 0.75) 
