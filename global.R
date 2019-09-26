@@ -15,6 +15,7 @@ library(class)
 library(caret)
 library(xgboost)
 library(corrplot)
+library(kernlab)
 
 ###### FUNCTIONS ######
 
