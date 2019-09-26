@@ -3,7 +3,7 @@ body <- dashboardBody(
   tabItems(
     tabItem( tabName = "foa",
       fluidPage(
-        tags$iframe(src = './intro.html', 
+        tags$iframe(src = './Intro.html', 
                     width = '100%', height = '1500px', 
                     frameborder = 0, scrolling = 'auto'
         )
