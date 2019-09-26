@@ -94,7 +94,7 @@ This can be seen here:
 
 
 ```{r freq, echo=FALSE,message=FALSE,warning=FALSE}
-df_all = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df_all = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
 attach(df_all)
 ```
 
@@ -146,7 +146,7 @@ We can have a look at the distribution of the PCA variables:
 
 ```{r PCA, echo=FALSE, fig.align ="center", message = FALSE, warning=FALSE}
 set.seed(1337)
-df = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
 df$Class <- factor(df$Class)
 df_distri <- df[,2:31]
 
@@ -333,7 +333,7 @@ colnames(test_svm)[colnames(test_svm)=="1"] <- "predicted"
 ### _Confusion Matrix_
 
 ```{r confusion_matrix_svm_test, echo=FALSE, fig.align ="center",warning=FALSE, message = FALSE}
-df1 = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df1 = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
 attach(df1)
 
 train.test.split1 <- sample(2

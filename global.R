@@ -17,6 +17,11 @@ library(xgboost)
 library(corrplot)
 library(kernlab)
 library(stargazer)
+library(rdrop2)
+
+
+
+
 
 ###### FUNCTIONS ######
 
@@ -44,8 +49,7 @@ plot_confusion_matrix <- function(verset, sSubtitle) {
 
 
 ########################################## 
-
-df = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
 attach(df)
 
 
@@ -137,7 +141,7 @@ test_svm_plot = df[train.test.split == 2,]
 #xgb.data.test <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
 
-df_xgb = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df_xgb = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
 df_xgb$Class <- factor(df_xgb$Class)
 set.seed(1337) 
 train.test.split <- sample(2
@@ -174,7 +178,7 @@ test_xgb$Class[test_xgb$Class == 1] = 0
 test_xgb$Class[test_xgb$Class == 2] = 1
 
 xgb.data.train <- xgb.DMatrix(as.matrix(train_smote_maison_xgb[, colnames(train_smote_maison_xgb) != "Class"]), label = train_smote_maison_xgb$Class)
-xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb1[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
+xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
 
 

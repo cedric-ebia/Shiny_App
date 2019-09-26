@@ -299,9 +299,6 @@ server <- function(input, output, session) {
   
   
   output$cor <- renderPlot({
-  library(corrplot)
-  df = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
-  attach(df)
   correlations <- cor(df,method="pearson") 
   corrplot(correlations, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
 
