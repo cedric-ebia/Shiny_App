@@ -32,6 +32,7 @@ r_packages:
   - caret
   - xgboost
   - corrplot
+  - ISLR
   
 script:
   - R -f deploy.R
