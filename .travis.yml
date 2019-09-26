@@ -18,6 +18,20 @@ r_packages:
   - shiny
   - tidyverse
   - kableExtra
+  - pROC
+  - DT
+  - shinydashboard
+  - shinyWidgets
+  - tibble
+  - shinycssloaders
+  - e1071
+  - ggplot2
+  - precrec
+  - dplyr
+  - class
+  - caret
+  - xgboost
+  - corrplot
   
 script:
   - R -f deploy.R

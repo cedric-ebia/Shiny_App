@@ -1,6 +1,7 @@
 set.seed(1337)
 
 library(pROC)
+library(DT)
 library(shiny)
 library(shinydashboard)
 library(shinyWidgets)
@@ -13,6 +14,7 @@ library(dplyr)
 library(class)
 library(caret)
 library(xgboost)
+library(corrplot)
 
 ###### FUNCTIONS ######
 
