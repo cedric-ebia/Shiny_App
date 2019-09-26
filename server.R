@@ -258,7 +258,6 @@ server <- function(input, output, session) {
     
     proba = as.data.frame(attr(test_svm$predicted, "probabilities"))
     test_svm = cbind(test_svm,proba)
-    attach(test_svm)
     test_svm = test_svm[,-c(33,32)]
     colnames(test_svm)[colnames(test_svm)=="1"] <- "predicted"
     
@@ -487,7 +486,6 @@ server <- function(input, output, session) {
     set.seed(1337)
     predicted = predict(logreg_classifier(), newdata = test_glm,type="response")
     test_glm_plot = cbind(test_glm,predicted)
-    attach(test_glm_plot)
     plot_confusion_matrix(test_glm_plot,"Logistic Regression")
     
     

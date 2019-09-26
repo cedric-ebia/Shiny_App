@@ -50,8 +50,6 @@ plot_confusion_matrix <- function(verset, sSubtitle) {
 
 ########################################## 
 df = data.frame(readRDS("df.rds"))
-attach(df)
-
 
 library(tibble)
 my_data <- tribble(
@@ -101,9 +99,9 @@ train.test.split <- sample(2
                            , replace = TRUE
                            , prob = c(0.7, 0.3))
 train = df[train.test.split == 1,]
-attach(train)
+
 test = df[train.test.split == 2,]
-attach(test)
+
 
 
 
