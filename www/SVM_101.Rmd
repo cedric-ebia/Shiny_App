@@ -1,0 +1,156 @@
+---
+title: "How to Support Vector Machine 101"
+output:
+  html_document: 
+    df_print: kable
+    toc: yes
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(kableExtra)
+library(stargazer)
+library(e1071)
+library(rpart)
+library(tidyverse)    
+library(kernlab)      
+library(e1071)        
+library(ISLR)         
+library(RColorBrewer) 
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Support vector machines are a set of supervized learning methods that are used for classification analysis. Basically, the idea is, to find a decision boundary to split data in regions corresponding to the classes of our objective variable. The classifier attributes a class to our observation according to the region it is in. 
+
+```{r dataviz, echo = FALSE}
+set.seed(12)
+
+x <- matrix(rnorm(10*2), ncol = 2)
+y <- c(rep(-1,5), rep(1,5))
+x[y==1,] <- x[y==1,] + 3/2
+dat <- data.frame(x=x, y=as.factor(y))
+
+
+plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
+
+```
+
+
+# SVM in linear separable cases
+
+Obviously, infinite lines exist to separate our individuals. SVM consists in finding the separating hyperplan that :
+ - correctly classify 
+ - maximizes the margin
+
+## Separating hyperplan
+
+coming soon
+
+```{r boundary, echo = FALSE}
+
+svmfit <- svm(y~., data = dat, kernel = "linear", scale=F)
+
+beta.0 <- -svmfit$rho 
+beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index]) 
+beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
+
+plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="green") 
+```
+
+## Margin
+
+In order to choose the best hyperplane, we select the one that maximizes the distance from it to the nearest data point on each side. This optimal decision boundary is called maximum-margin hyperplane, the margin being the distance between the hyperplane and the nearest data points, known as the support vectors.
+
+```{r margins, echo = FALSE}
+set.seed(123)
+svmfit <- svm(y~., data = dat, kernel = "linear", scale=F)
+
+beta.0 <- -svmfit$rho 
+beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index]) 
+beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
+
+plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="green")
+points(dat$x.1[svmfit$index],dat$x.2[svmfit$index],cex=3,col=rgb(0,0,0))
+abline((-beta.0-1.0)/beta.2,-beta.1/beta.2,col="gray") 
+abline((-beta.0+1.0)/beta.2,-beta.1/beta.2,col="gray") 
+```
+
+# SVM in non-separable cases
+
+In the previous case, our data was easily linearly separable. But in reality, datasets are almost never linearly separable. That is why it is impossible to obtain a linear frontier that will 100% correctly separate each observations according to the class it belongs to. Then we have to resort to soft margin, authorizing some observations to be misclassified or inside the margin.
+
+## Soft Margin
+
+For almost linearly separable samples, we introduce slack variables which are variables that allow us to relax the constraint meaning that we no longer will have to correctly and confidently classify every single training point. Then we use a cost hyperparameter that controls how much we penalize our slack variables. This parameter is automatically chosen by cross-validation when computing the corresponding function.
+
+### Degree of tolerance
+
+The importance we want to give to misclassifications is represented as the penalty term "C". The bigger the C, the more penalty SVM gets when it makes misclassification.
+
+# Kernel trick
+
+Most of problems fall under non-linear separation. The Kernel trick rely on the fact that: 
+
+A complex pattern-classication problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space, provided that the space is not densely populated. (T.M. Cover, 1965)  
+
+In order to improve the space of data, we resort to a kernel function that will create new axis by combining existing ones. The kernel function has to respect Mercers theorem conditions and does not require an explicit knowledge of the transformations used to transform the space of data. 
+
+### Polynomial
+
+Support vector machine with a polynomial kernel can generate a non-linear decision boundary using those polynomial features. One can choose the number of degrees to apply on the polynomial tranformation to...
+
+```{r poly, echo = FALSE}
+set.seed(123)
+x <- matrix(rnorm(200*2), ncol = 2)
+y <- c(rep(-1,100), rep(1,100))
+x[y==1,] <- x[y==1,] + 3/2
+dat <- data.frame(x=x, y=as.factor(y))
+
+ggplot(data = dat, aes(x = x.1, y = x.2, color = y, shape = y)) + 
+  labs(x = "X1", y="X2") +
+  geom_point(size = 2) +
+  scale_color_manual(values=c("#000000", "#FF0000")) +
+  theme(legend.position = "none")
+
+svmfit <- svm(y~., data = dat, kernel = "polynomial", degree = 5, scale = FALSE)
+
+plot(svmfit, dat, ylab = "X2", xlab = "X1")
+
+```
+
+
+## Radial Basis Function (RBF) kernel
+
+The radial basis transformation generates new features by measuring the distance between all other dots to a specific dot. A gamma parameter controls the importance accorded to these new features. The higher the gamma, more wiggling the boundary will be. In other words, a small gamma will give you low bias and high variance while a large gamma will give you higher bias and low variance.
+
+You usually find the best C and Gamma hyper-parameters using Grid-Search.
+
+```{r rbf, echo = FALSE}
+set.seed(123)
+x <- matrix(rnorm(200*2), ncol = 2)
+x[1:100,] <- x[1:100,] + 2.5
+x[101:150,] <- x[101:150,] - 2.5
+y <- c(rep(1,150), rep(2,50))
+dat <- data.frame(x=x,y=as.factor(y))
+
+train <- base::sample(200,100, replace = FALSE)
+svmfit <- svm(y~., data = dat[train,], kernel = "radial", gamma = 1, cost = 1)
+
+#plot(svmfit, dat)
+
+kernfit <- ksvm(x[train,],y[train], type = "C-svc", kernel = 'rbfdot', C = 1, scaled = c())
+plot(kernfit, data = x[train,])
+```
+
+
+
+
+

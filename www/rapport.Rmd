@@ -1,0 +1,588 @@
+---
+title: "Support Vector Machine - Project"
+output:
+  html_document: 
+    df_print: kable
+    toc: yes
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+set.seed(1337) 
+
+
+library(knitr)
+library(kableExtra)
+library(stargazer)
+library(ggplot2)
+library(xgboost)
+library(corrplot)
+library(pROC)
+library(dplyr)
+library(grid)
+library(reshape2)
+library(caret)
+library(precrec)
+library(e1071)
+library(xgboost)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r functions, include=FALSE}
+plot_confusion_matrix <- function(verset, sSubtitle) {
+    tst <- data.frame(round(verset$predicted,0), verset$Class)
+    opts <-  c("Predicted", "True")
+    names(tst) <- opts
+    cf <- plyr::count(tst)
+    cf[opts][cf[opts]==0] <- "Not Fraud"
+    cf[opts][cf[opts]==1] <- "Fraud"
+    
+    ggplot(data =  cf, mapping = aes(x = True, y = Predicted)) +
+      labs(title = "Confusion matrix", subtitle = sSubtitle) +
+      geom_tile(aes(fill = freq), colour = "grey") +
+      geom_text(aes(label = sprintf("%1.0f", freq)), vjust = 1) +
+      scale_fill_gradient(low = "blue", high = "red") +
+      theme_bw() + theme(legend.position = "none")
+  
+}
+
+plot_confusion_matrix2 <- function(verset, sSubtitle) {
+    verset$predicted <- as.numeric(as.character(verset$predicted))
+    tst <- data.frame(round(verset$predicted,0), verset$Class)
+    opts <-  c("Predicted", "True")
+    names(tst) <- opts
+    cf <- plyr::count(tst)
+    cf[opts][cf[opts]==0] <- "Not Fraud"
+    cf[opts][cf[opts]==1] <- "Fraud"
+    
+    ggplot(data =  cf, mapping = aes(x = True, y = Predicted)) +
+      labs(title = "Confusion matrix", subtitle = sSubtitle) +
+      geom_tile(aes(fill = freq), colour = "grey") +
+      geom_text(aes(label = sprintf("%1.0f", freq)), vjust = 1) +
+      scale_fill_gradient(low = "blue", high = "red") +
+      theme_bw() + theme(legend.position = "none")
+  
+}
+
+```
+
+# **First analysis**
+
+## Frequency of the Class variable
+Indeed, the datasets is **very** unbalanced as frauds account for $0.172\%$ of all transactions.  
+
+This can be seen here:
+
+
+```{r freq, echo=FALSE,message=FALSE,warning=FALSE}
+df_all = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+attach(df_all)
+```
+
+
+```{r freq2, echo=FALSE, fig.align ="center", message=FALSE, warning= FALSE}
+set.seed(1337)
+df_all[df_all$Class == 0,] = "Not Fraudulent"
+df_all[df_all$Class == 1,] = "Fraudulent"
+
+
+par(oma=c(2,3.5,0,0)) #Don't cut labels  
+barplot(table(df_all$Class), 
+        space = 0,
+        main = "Frequency of transactions",
+        border="black", 
+        col="dark blue",
+        las=2, 
+        horiz = TRUE) 
+axis(1, at =  Class,labels = FALSE) # at x-axis at category borders
+```
+
+
+```{r kable, echo=FALSE, results = "asis", fig.align = 'center'}
+kable(prop.table(table(df_all$Class)),col.names = c("Class","Proportion"),"html") %>%
+  kable_styling()
+```
+## Summary of the PCA variables
+
+V1 to V28 variables are indeed normalized as their mean is 0. Hence there is no need to feature scale our data.  
+
+This can be seen here:
+
+
+```{r kable2, echo=FALSE, fig.align ="center", results="asis"}
+set.seed(1337)
+data = data.frame(unclass(summary(df_all[,2:29])), check.names = FALSE, stringsAsFactors = FALSE)
+data[4,] = as.numeric(as.character(data[4,]))
+data[is.na(data)] = 0.0
+
+kable(data[4,], "html", row.names = FALSE, col.names = c("V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13","V14","V15","V16","V17","V18","V19","V20","V21","V22","V23","V24","V25","V26","V27","V28")) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+```
+
+
+We can have a look at the distribution of the PCA variables:   
+
+
+
+```{r PCA, echo=FALSE, fig.align ="center", message = FALSE, warning=FALSE}
+set.seed(1337)
+df = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+df$Class <- factor(df$Class)
+df_distri <- df[,2:31]
+
+# Same as before but for Principal Component variables
+df_reshaped <- melt(df_distri,id.vars = "Class", measure.vars = colnames(df_distri)[c(-29,-30)])
+
+df_pc_summary <- df_reshaped %>%
+  group_by(Class,variable) %>% 
+  summarise(mean = mean(value), median = median(value))
+df_pc_summary <- melt(df_pc_summary,id.vars = c("Class","variable"), measure.vars = c("mean","median"))
+colnames(df_pc_summary) <- c("Class","variable","Stat","Value")
+
+# Plotting the distribution of PC variables 
+ggplot(df_reshaped, aes(x = value, fill = Class) ) + 
+  geom_density(alpha = 0.5,  col = "black") +
+  geom_vline( 
+    data = df_pc_summary,
+    aes(colour = Class,linetype = Stat, xintercept=Value),
+    show.legend = TRUE
+  ) +
+  facet_wrap("variable", ncol = 4, nrow = 7, scales = "free_y") +
+  xlim(-5,5) +
+  scale_fill_discrete(labels = c("Regular", "Fraud")) +
+  scale_color_discrete(breaks = NULL) +
+  labs(title = "Density Distribution for each PC variable")+
+  theme (
+    axis.title.y = element_blank()
+  )
+
+```
+
+
+
+We observe that there is a few variables that share the same distribution: **V13**,**V15**,**V22** and **V25** but for most of the variables they come from different distributions.
+
+## t-SNE
+
+
+Visualizing high-dimensional data by projecting it into a low-dimensional space is a classic operation.  
+There are a huge variety of methods for reducing dimensionality, but one very popular method is t-SNE, which stands for **t-distributed stochastic neighbor embedding**, a method proposed by Geoffry Hinton’s group back in 2008. The paper can be found [here](http://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf).
+
+The picture beneath shows the t-SNE method applied on our datasets for 10% of our data. The package used here was [Rtsne](https://cran.r-project.org/web/packages/Rtsne/Rtsne.pdf).  
+For computation time sake, we decided to directly put the picture of it, the code to reproduce this heatmap can be found [here](https://github.com/loicpalma/Shiny_App/blob/master/T-SNE.R).  
+
+
+
+<center>
+![t-SNE](C:/Users/theloloboss/Desktop/dashboard/www/Rplot.png)
+</center>  
+
+
+
+We easily conclude that there is an __area__ where there are fraudulents transactions being made (<span style="color: #fb4141">red part </span> of the heatmap).  
+However there is still a lot of fraudulent transactions overlooked among the large number of transactions made.
+
+## Correlation Matrix
+
+In order to get a more in-depth vision of our datasets, here is the correlation matrix.  
+
+
+<center>
+![Correlation Matrix](C:/Users/theloloboss/Desktop/dashboard/www/corr_matrix.png)
+</center>  
+
+We can see that __**Amount**__ is strongly negatively correlated to __**V2**__ and that __**Amount**__ is strongly positively correlated to __**V7**__. Again, as most of our variables are coming from a PCA, we have no idea what they represent.  
+
+
+# **Dealing with unbalanced datasets**
+
+Imbalanced classes are a common problem in machine learning classification where there are a disproportionate ratio of observations in each class. Class imbalance can be found in many different areas including medical diagnosis, spam filtering, and as it is in our case: **fraud detection**.  
+The problem with most ML algorithms is that it work best when the number of samples in each class are about equal. This comes down from the fact that most algorithms are designed to **maximize accuray and reduce error**.
+
+## Using the right evaluation metrics
+
+After trying some typical ML algorithms (SVM, XGBoost, RF, KNN) we came to conclude that we were experementing good accuracies on all of our models. This is because of the the accuracy bias for unbalanced data. Applying inappropriate evaluation metrics for model generated using imbalanced data can be dangerous. Taking our datasets as an example, if accuracy is used to measure the goodness of a model, a model which classifies all testing samples into non-fraudulent will have an excellent accuracy ($99.99828\%$), and that without even training the model. Obviously, this model won’t provide any valuable information for us.
+
+1. **Precision/Specifity:**
+The number of true positives divided by all positive predictions. Precision is also called Positive Predictive Value. It is a measure of a classifier’s exactness. Low precision indicates a high number of false positives.
+
+$$ \textrm{Specificity} = \frac{TP}{FP+TP} $$
+
+2. **Recall/Sensitivity:**
+The number of true positives divided by the number of positive values in the test data. Recall is also called Sensitivity or the True Positive Rate. It is a measure of a classifier’s completeness. Low recall indicates a high number of false negatives.
+
+$$ \textrm{Sensitivity} = \frac{TP}{FN+TP} $$
+
+3. **AUC:**
+Relation between true-positive rate and false positive rate.
+
+
+_NOTA BENE_: Be aware that by using those metrics, we might decrease the accuracy : this is a __**trade-off**__. Indeed, we prefer having fraud transactions well classified than having non-fraud transactions missclassified. That is why we choose to use costs vector in our SVM.
+
+## Resample the training set
+
+Apart from using different evaluation criteria, one can also work on getting different datasets. Two approaches to make a balanced dataset out of an imbalanced one are under-sampling and over-sampling. We will use under-sampling.
+
+### _SMOTE_
+The __Synthetic Minority Over-sampling__ Technique aka **SMOTE** in order to oversamples rare events by using bootstrapping and k-nearest neighbor to synthetically create additional observations of that event. The definition of rare event is usually attributed to any outcome/dependent/target/response variable that happens less than $15\%$ of the time. Hence, we had good reason to use it. 
+For more details about this algorithm, read the original white paper, [SMOTE: Synthetic Minority Over-sampling Technique](https://www.kaggle.com/mlg-ulb/creditcardfraud), from its creators, on [arXiv](https://arxiv.org/). The package used here was [DMwR](https://www.rdocumentation.org/packages/DMwR/versions/0.4.1/topics/SMOTE).  
+
+To keep in mind: although it increases the number of True Positives, the number of False Positives may increase way more when using SMOTE!
+
+### _Random Under Sampling_
+This method works with majority class. It reduces the number of observations from majority class to make the data set balanced. This method is best to use when the data set is huge and reducing the number of training samples helps to improve run time and storage troubles.
+
+There are 2 types of undersampling methods: _Random_ and _Informative_. We will use the Random Method. 
+
+Random undersampling method randomly chooses observations from majority class which are eliminated until the data set gets balanced. Informative undersampling follows a pre-specified selection criterion to remove the observations from majority class. More details [here](https://en.wikipedia.org/wiki/Oversampling_and_undersampling_in_data_analysis).
+
+
+### _Use k-fold cross-validation_
+We need to keep in mind that we are using Over-sampling to generate other datasets. Hence we need to keep randomness to make sure there is no overfitting problems.
+
+
+
+# **Models**
+
+## Training and Test Set
+
+As we said earlier, we used Random Under Sampling to make our training set. This helps us saving computation time as well as having a more balanced dataset.
+
+<center>
+![Because a picture is worth a thousand words!](C:/Users/theloloboss/Desktop/dashboard/www/split.png)
+</center>
+
+## SVM
+
+There is different type of kernel but we will use the one that does the most accurate confusion matrix, which is a simple linear SVM with a cost parameter equal to 1.
+
+```{r split1, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337) 
+train.test.split <- sample(2
+                    , nrow(df)
+                    , replace = TRUE
+                    , prob = c(0.7, 0.3))
+train = df[train.test.split == 1,]
+test = df[train.test.split == 2,]
+test2 = test
+```
+
+
+```{r split, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+train_smote_1 = train %>%
+  filter(Class == 1)
+
+train_smote_0 = train %>%
+  filter(Class == 0)
+
+train_smote_0 = train_smote_0 %>%
+  sample_n(8*nrow(train_smote_1), replace = FALSE)
+
+train_smote_maison = rbind(train_smote_0,train_smote_1)
+
+train_smote_maison$Class = factor(train_smote_maison$Class)
+
+```
+
+```{r svm, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+ classifier = svm(formula = Class ~ ., 
+                         data = train_smote_maison, 
+                         type = 'C-classification', 
+                         kernel = "linear",
+                         probability = TRUE,
+                         cross = 3,
+                         cost = 100) 
+```
+
+```{r conf_svm, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+test_svm = df[train.test.split == 2,]
+test_svm$predicted= predict(classifier
+                                , newdata = as.matrix(test_svm[, colnames(test_svm) != "Class"]),probability=TRUE)
+    
+proba = as.data.frame(attr(test_svm$predicted, "probabilities"))
+test_svm = cbind(test_svm,proba)
+attach(test_svm)
+test_svm = test_svm[,-c(33,32)]
+colnames(test_svm)[colnames(test_svm)=="1"] <- "predicted"
+
+
+
+```  
+### _Confusion Matrix_
+
+```{r confusion_matrix_svm_test, echo=FALSE, fig.align ="center",warning=FALSE, message = FALSE}
+df1 = data.frame(read.csv("creditcard.csv",header=TRUE,sep="," ,quote = "\""))
+attach(df1)
+
+train.test.split1 <- sample(2
+                           , nrow(df1)
+                           , replace = TRUE
+                           , prob = c(0.7, 0.3))
+train1 = df1[train.test.split1 == 1,]
+attach(train1)
+test1 = df1[train.test.split1 == 2,]
+attach(test1)
+
+train_smote_1_svm = train1 %>%
+  filter(Class == 1)
+
+train_smote_0_svm = train1 %>%
+  filter(Class == 0)
+
+train_smote_0_svm = train_smote_0_svm %>%
+  sample_n(8*nrow(train_smote_1_svm), replace = FALSE)
+
+train_smote_maison_svm = rbind(train_smote_0_svm,train_smote_1_svm)
+
+
+train_smote_maison_svm$Class = factor(train_smote_maison_svm$Class)
+
+classifier1 = svm(formula = Class ~ ., 
+                 data = train_smote_maison_svm, 
+                 type = 'C-classification', 
+                 kernel = "linear",
+                 probability = TRUE,
+                 cross = 3,
+                 cost = 1) 
+
+set.seed(1337)
+test_svm1= df1[train.test.split1 == 2,]
+test_svm1$predicted= predict(classifier1
+                            , newdata = as.matrix(test_svm1[, colnames(test_svm1) != "Class"]),probability=TRUE)
+
+proba1 = as.data.frame(attr(test_svm1$predicted, "probabilities"))
+test_svm_final = cbind(test_svm1,proba1)
+attach(test_svm_final)
+test_svm_final = test_svm_final[,-c(33,32)]
+colnames(test_svm_final)[colnames(test_svm_final)=="1"] <- "predicted"
+
+```
+```{r confusion_matrix_svm, echo=FALSE, fig.align ="center",warning=FALSE, message=FALSE}
+plot_confusion_matrix(test_svm_final,  "SVM")
+```
+
+```{r splitsvm, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+test_svm_plot = df[train.test.split == 2,]
+    predictions_svm2 <- predict(classifier1,newdata = test_svm_plot, probability=T)
+    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
+    svm2_perfromance <- evalmod(svm2_predict_obj)
+
+```
+### _ROC-AUC_
+```{r svm_plot, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(svm2_perfromance)
+```
+
+
+## XGBoost
+
+
+
+```{r split_xgboost, echo=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+train.test.split <- sample(2
+                           , nrow(df)
+                           , replace = TRUE
+                           , prob = c(0.7, 0.3))
+train_xgb = df[train.test.split == 1,]
+test_xgb1 = df[train.test.split == 2,]
+test_xgb2 = df[train.test.split == 2,]
+
+train_smote_maison_xgb = train_smote_maison
+train_smote_maison_xgb$Class = as.integer(train_smote_maison_xgb$Class)
+test_xgb1$Class = as.integer(test_xgb1$Class)
+test_xgb2$Class = as.integer(test_xgb2$Class)
+
+train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 1] = 0
+train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 2] = 1
+
+test_xgb1$Class[test_xgb1$Class == 1] = 0
+test_xgb1$Class[test_xgb1$Class == 2] = 1
+
+test_xgb2$Class[test_xgb2$Class == 1] = 0
+test_xgb2$Class[test_xgb2$Class == 2] = 1
+
+xgb.data.train <- xgb.DMatrix(as.matrix(train_smote_maison_xgb[, colnames(train_smote_maison_xgb) != "Class"]), label = train_smote_maison_xgb$Class)
+xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb1[, colnames(test_xgb1) != "Class"]), label = test_xgb1$Class)
+xgb.data.test2 <- xgb.DMatrix(as.matrix(test_xgb2[, colnames(test_xgb2) != "Class"]), label = test_xgb2$Class)
+```
+
+
+
+```{r xgboost_auc, include=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+xgb.model <- xgb.train(data = xgb.data.train
+                  		, params = list(objective = "binary:logistic"
+                  			, eta = 0.1
+                  			, max.depth = 10
+                  			, min_child_weight = 100
+                  			, subsample = 0.5
+                  			, colsample_bytree = 0.7
+                  			, nthread = 3
+                  			, scale_pos_weight = 577
+                  			, eval_metric = "aucpr"
+                  			)
+                  		, watchlist = list(train = xgb.data.train,test = xgb.data.test1)
+                  		, nrounds = 500
+                  		, early_stopping_rounds = 40
+                  		, print_every_n = 501
+                  		)
+
+set.seed(1337)
+xgb.model2 <- xgb.train(data = xgb.data.train
+                  		, params = list(objective = "binary:logistic"
+                  			, eta = 0.1
+                  			, max.depth = 10
+                  			, min_child_weight = 100
+                  			, subsample = 0.5
+                  			, colsample_bytree = 0.7
+                  			, nthread = 3
+                  			, scale_pos_weight = 577
+                  			, eval_metric = "auc"
+                  			)
+                  		, watchlist = list(train = xgb.data.train,test = xgb.data.test2)
+                  		, nrounds = 500
+                  		, early_stopping_rounds = 40
+                  		, print_every_n = 501
+                  		)
+
+```
+
+
+We choose **aucpr** which stands for **Area under the PR Curve** as our evaluation metric and not **auc** as aucpr is more finicky. the dominant difference between the area under the curve of a _receiver operator characteristic curve_ (ROC-AUC) and the _area under the curve of a Precision-Recall curve_ (PR-AUC) lies in its **tractability for unbalanced classes**.  
+If you want more details about it check [The Relationship Between Precision-Recall and ROC Curves](http://pages.cs.wisc.edu/~jdavis/davisgoadrichcamera2.pdf).
+
+
+### _Confusion Matrix_
+
+```{r confusion_matrix_xgboost1, echo=FALSE, fig.align ="center", message=FALSE}
+set.seed(1337)
+test_xgb1$predicted= predict(xgb.model
+                    , newdata = as.matrix(test_xgb1[, colnames(test_xgb1) != "Class"])
+                    , ntreelimit = xgb.model$bestInd)
+
+set.seed(1337)
+test_xgb2$predicted= predict(xgb.model2
+                    , newdata = as.matrix(test_xgb2[, colnames(test_xgb2) != "Class"])
+                    , ntreelimit = xgb.model2$bestInd)
+    
+```
+
+```{r confusion_matrix_xgboost, echo=FALSE, fig.align ="center"}
+plot_confusion_matrix(test_xgb1, "XGBoost using AUC as evaluation metric")
+plot_confusion_matrix(test_xgb2, "XGBoost using AUCPR as evaluation metric")
+```
+
+Ouch
+
+### _ROC-AUC_
+
+```{r roc_auc, echo=FALSE, fig.align ="center", message = FALSE, warning=FALSE}
+set.seed(1337)
+test_xgb_plot = df[train.test.split == 2,]
+predictions_xgb= predict(xgb.model
+                         , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
+                         , ntreelimit = xgb.model$bestInd)
+xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
+xgb_performance <- evalmod(xgb_predict_obj)
+
+```
+```{r xgbz, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(xgb_performance)
+```
+
+
+
+## K-Nearest Neighbors
+
+```{r knn, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+set.seed(1337)
+
+classifier_knn <- knn3(Class ~ .
+                          , data = train_smote_maison
+                          , k = 3)
+test_knn = df[train.test.split == 2,]
+test_knn$Class = as.integer(test_knn$Class)
+test_knn$Class[test_knn$Class == 1] = 0
+test_knn$Class[test_knn$Class == 2] = 1
+predictions_knn <- predict(classifier_knn,newdata = test_knn, type="prob")
+predictions_knn_conf <- predictions_knn[,"1"]
+conf_knn = cbind(test_knn,predictions_knn_conf)
+colnames(conf_knn)[colnames(conf_knn)=="predictions_knn_conf"] <- "predicted"
+
+predictions_knn <- predict(classifier_knn,newdata = test_knn, type="prob")
+predictions_knn <- predictions_knn[,"1"]
+knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
+knn_performance <- evalmod(knn_predict_obj)
+
+
+```
+### _Confusion Matrix_
+
+
+
+```{r confusion_matrix_knn2, echo=FALSE, fig.align ="center"}
+plot_confusion_matrix(conf_knn, "K-Nearest-Neighbors")
+```
+
+### _ROC-AUC_
+```{r knn_plot, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(knn_performance)
+```
+
+
+## Logistic Regression
+
+```{r glm, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+set.seed(1337)
+classifier_logreg <- glm(data = train_smote_maison, family = "binomial",
+                               formula = Class ~ .)
+set.seed(1337)
+test_glm = df[train.test.split == 2,]
+test_glm$Class = as.integer(test_glm$Class)
+test_glm$Class[test_glm$Class == 1] = 0
+test_glm$Class[test_glm$Class == 2] = 1
+predicted = predict(classifier_logreg, newdata = test_glm,type="response")
+test_glm_plot = cbind(test_glm,predicted)
+attach(test_glm_plot)
+
+predictions_logreg <- predict(classifier_logreg,newdata = test_glm, type = "response")
+logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
+logreg_performance <- evalmod(mdat = logreg_predict_obj) 
+
+```
+### _Confusion Matrix_  
+
+
+```{r confusion_matrix_knn, echo=FALSE, fig.align ="center"}
+plot_confusion_matrix(test_glm_plot,"Logistic Regression")
+```
+
+### _ROC AUC_
+
+
+```{r glm_plot, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(logreg_performance)
+```
+
+
+# **Model Comparison**
+
+Let's compare our model!
+
+
+
+
+[Master ESA](https://www.univ-orleans.fr/deg/masters/ESA/index.htm)
+
+[Github](https://github.com/loicpalma/Shiny_App)
+
