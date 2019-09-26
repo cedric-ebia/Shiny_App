@@ -20,8 +20,8 @@ library(stargazer)
 library(rdrop2)
 
 
-
-
+token <- readRDS("droptoken.rds")
+drop_acc(dtoken = token)
 
 ###### FUNCTIONS ######
 
