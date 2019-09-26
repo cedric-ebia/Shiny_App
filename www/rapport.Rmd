@@ -27,10 +27,8 @@ library(caret)
 library(xgboost)
 library(corrplot)
 library(kernlab)
-library(stargazer)
 library(knitr)
 library(kableExtra)
-library(stargazer)
 library(ggplot2)
 library(xgboost)
 library(corrplot)
@@ -196,7 +194,7 @@ For computation time sake, we decided to directly put the picture of it, the cod
 
 
 <center>
-![t-SNE](C:/Users/theloloboss/Desktop/dashboard/www/Rplot.png)
+![t-SNE](Rplot.png)
 </center>  
 
 
@@ -210,7 +208,7 @@ In order to get a more in-depth vision of our datasets, here is the correlation 
 
 
 <center>
-![Correlation Matrix](C:/Users/theloloboss/Desktop/dashboard/www/corr_matrix.png)
+![Correlation Matrix](corr_matrix.png)
 </center>  
 
 We can see that __**Amount**__ is strongly negatively correlated to __**V2**__ and that __**Amount**__ is strongly positively correlated to __**V7**__. Again, as most of our variables are coming from a PCA, we have no idea what they represent.  
@@ -271,7 +269,7 @@ We need to keep in mind that we are using Over-sampling to generate other datase
 As we said earlier, we used Random Under Sampling to make our training set. This helps us saving computation time as well as having a more balanced dataset.
 
 <center>
-![Because a picture is worth a thousand words!](C:/Users/theloloboss/Desktop/dashboard/www/split.png)
+![Because a picture is worth a thousand words!](split.png)
 </center>
 
 ## SVM
