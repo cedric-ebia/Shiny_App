@@ -20,8 +20,8 @@ library(stargazer)
 library(rdrop2)
 
 
-token <- readRDS("droptoken.rds")
-drop_acc(dtoken = token)
+#token <- readRDS("droptoken.rds")
+#drop_acc(dtoken = token)
 
 ###### FUNCTIONS ######
 
@@ -49,7 +49,7 @@ plot_confusion_matrix <- function(verset, sSubtitle) {
 
 
 ########################################## 
-df = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
+df = data.frame(readRDS("df.rds"))
 attach(df)
 
 
@@ -141,7 +141,7 @@ test_svm_plot = df[train.test.split == 2,]
 #xgb.data.test <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
 
-df_xgb = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
+df_xgb = data.frame(readRDS("df.rds"))
 df_xgb$Class <- factor(df_xgb$Class)
 set.seed(1337) 
 train.test.split <- sample(2

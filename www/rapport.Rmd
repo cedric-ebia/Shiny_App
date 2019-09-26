@@ -94,7 +94,7 @@ This can be seen here:
 
 
 ```{r freq, echo=FALSE,message=FALSE,warning=FALSE}
-df_all = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
+df_all = data.frame(readRDS("df.rds"))
 attach(df_all)
 ```
 
@@ -146,7 +146,7 @@ We can have a look at the distribution of the PCA variables:
 
 ```{r PCA, echo=FALSE, fig.align ="center", message = FALSE, warning=FALSE}
 set.seed(1337)
-df = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
+df = data.frame(readRDS("df.rds"))
 df$Class <- factor(df$Class)
 df_distri <- df[,2:31]
 
@@ -194,7 +194,7 @@ For computation time sake, we decided to directly put the picture of it, the cod
 
 
 <center>
-![t-SNE](Rplot.png)
+![t-SNE](Rplot.PNG)
 </center>  
 
 
@@ -269,7 +269,7 @@ We need to keep in mind that we are using Over-sampling to generate other datase
 As we said earlier, we used Random Under Sampling to make our training set. This helps us saving computation time as well as having a more balanced dataset.
 
 <center>
-![Because a picture is worth a thousand words!](split.png)
+![Because a picture is worth a thousand words!](split.PNG)
 </center>
 
 ## SVM
