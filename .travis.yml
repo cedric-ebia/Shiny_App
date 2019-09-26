@@ -34,6 +34,7 @@ r_packages:
   - corrplot
   - ISLR
   - kernlab
+  - stargazer
   
 script:
   - R -f deploy.R

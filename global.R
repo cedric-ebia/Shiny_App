@@ -16,6 +16,7 @@ library(caret)
 library(xgboost)
 library(corrplot)
 library(kernlab)
+library(stargazer)
 
 ###### FUNCTIONS ######
 
