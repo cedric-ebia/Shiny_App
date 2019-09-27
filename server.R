@@ -526,57 +526,45 @@ server <- function(input, output, session) {
     
     predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    curves.svm <- evalmod(svm2_predict_obj)
-    curves.svm.df <- as.data.frame(curves.svm)
+    svm2_performance <- evalmod(svm2_predict_obj)
     
     test_xgb_plot = df[train.test.split == 2,]
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
-    curves.xgb = evalmod(xgb_predict_obj)
-    curves.xgb.df = as.data.frame(curves.xgb)
+    xgb_performance = evalmod(xgb_predict_obj)
     
     test_knn = test
     predictions_knn <- predict(knn_classifier(),newdata = test_knn, type="prob")
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
-    curves.knn = evalmod(knn_predict_obj)
-    curves.knn.df = as.data.frame(curves.knn)
+    knn_performance = evalmod(knn_predict_obj)
     
     
     test_glm_plot = df[train.test.split == 2,]
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
-    curves.glm = evalmod(mdat = logreg_predict_obj) 
-    curves.glm.df = as.data.frame(curves.glm)
+    logreg_performance = evalmod(mdat = logreg_predict_obj) 
     
-
-    
-    ROC_svm = curves.svm.df %>%
-      filter(type == "ROC")
-    
-    ROC_xgb = curves.xgb.df %>%
-      filter(type == "ROC")
-    
-    ROC_knn = curves.knn.df %>%
-      filter(type == "ROC")
-    
-    ROC_glm = curves.glm.df %>%
-      filter(type == "ROC")
+    svm_df <- fortify(svm2_performance)
+    logreg_df <- fortify(logreg_performance)
+    knn_df <- fortify(knn_performance)
+    xgb_df <- fortify(xgb_performance)
     
     
-    ROC_svm$type = "SVM"
-    ROC_xgb$type = "XGBoost"
-    ROC_glm$type = "Logistic"
-    ROC_knn$type = "KNN"
+    svm_df$classifier <- "SVM"
+    logreg_df$classifier <- "LOGIT"
+    knn_df$classifier <- "KNN"
+    xgb_df$classifier <- "XGB"
     
-    ROC_ALL = rbind(ROC_svm,ROC_xgb,ROC_glm,ROC_knn)
+    performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
     
+    roc <- performance_df[performance_df$curvetype == "ROC",]
     
     ggplot() +
       # green plot
-      geom_line(data=ROC_ALL, aes(x=x, y=y,colour=type)) + 
+      geom_line(data=roc, aes(x=x, y=y,colour=classifier)) + 
       geom_abline(intercept=0, slope=1, linetype = "dashed") +
       ylab("Sensitivity") +
       xlab("1-Specificity") +
@@ -592,60 +580,50 @@ server <- function(input, output, session) {
     
     predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    curves.svm <- evalmod(svm2_predict_obj)
-    curves.svm.df <- as.data.frame(curves.svm)
+    svm2_performance <- evalmod(svm2_predict_obj)
     
     test_xgb_plot = df[train.test.split == 2,]
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
-    curves.xgb = evalmod(xgb_predict_obj)
-    curves.xgb.df = as.data.frame(curves.xgb)
+    xgb_performance = evalmod(xgb_predict_obj)
     
     test_knn = test
     predictions_knn <- predict(knn_classifier(),newdata = test_knn, type="prob")
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
-    curves.knn = evalmod(knn_predict_obj)
-    curves.knn.df = as.data.frame(curves.knn)
+    knn_performance = evalmod(knn_predict_obj)
     
     
     test_glm_plot = df[train.test.split == 2,]
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
-    curves.glm = evalmod(mdat = logreg_predict_obj) 
-    curves.glm.df = as.data.frame(curves.glm)
+    logreg_performance = evalmod(mdat = logreg_predict_obj) 
     
- 
+    svm_df <- fortify(svm2_performance)
+    logreg_df <- fortify(logreg_performance)
+    knn_df <- fortify(knn_performance)
+    xgb_df <- fortify(xgb_performance)
     
-    PRC_svm = curves.svm.df %>%
-      filter(type == "PRC")
     
-    PRC_xgb = curves.xgb.df %>%
-      filter(type == "PRC")
+    svm_df$classifier <- "SVM"
+    logreg_df$classifier <- "LOGIT"
+    knn_df$classifier <- "KNN"
+    xgb_df$classifier <- "XGB"
     
-    PRC_knn = curves.knn.df %>%
-      filter(type == "PRC")
+    performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
     
-    PRC_glm = curves.glm.df %>%
-      filter(type == "PRC")
-    
-    PRC_svm$type = "SVM"
-    PRC_xgb$type = "XGBoost"
-    PRC_glm$type = "Logistic"
-    PRC_knn$type = "KNN"
-    
-    PRC_ALL = rbind(PRC_svm,PRC_xgb,PRC_glm,PRC_knn)
+    prc <- performance_df[performance_df$curvetype == "PRC",]
     
     ggplot() +
       # green plot
-      geom_line(data=PRC_ALL, aes(x=x, y=y,colour=type)) + 
-      ylab("Sensitivity") +
-      xlab("1-Specificity") +
+      geom_line(data=prc, aes(x=x, y=y,colour=classifier)) + 
+      ylab("Precision") +
+      xlab("Recall") +
       ggtitle("PRC Comparison") +
       labs(colour = "Type of Model:")
-    
+
   })
   
   output$plot_all_ROC <- renderPlot({

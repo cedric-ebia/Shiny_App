@@ -333,7 +333,7 @@ colnames(test_svm)[colnames(test_svm)=="1"] <- "predicted"
 ### _Confusion Matrix_
 
 ```{r confusion_matrix_svm_test, echo=FALSE, fig.align ="center",warning=FALSE, message = FALSE}
-df1 = data.frame(drop_read_csv("Shiny_App/creditcard.csv", header=TRUE,sep=",",quote="\""))
+df1 = data.frame(readRDS("df.rds"))
 attach(df1)
 
 train.test.split1 <- sample(2
@@ -591,9 +591,233 @@ autoplot(logreg_performance)
 
 # **Model Comparison**
 
-Let's compare our model!
 
 
+```{r comparison_ROC1, echo=FALSE, fig.align ="center" , results="asis", message=FALSE,warning=FALSE}
+    predictions_svm2 <- predict(classifier,newdata = test_svm_plot, probability=T)
+    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
+    svm2_performance <- evalmod(svm2_predict_obj)
+    
+    test_xgb_plot = df[train.test.split == 2,]
+    predictions_xgb= predict(xgb.model
+                             , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
+                             , ntreelimit = xgb.model$bestInd)
+    xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
+    xgb_performance = evalmod(xgb_predict_obj)
+    
+    test_knn = test
+    predictions_knn <- predict(classifier_knn,newdata = test_knn, type="prob")
+    predictions_knn <- predictions_knn[,"1"]
+    knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
+    knn_performance = evalmod(knn_predict_obj)
+    
+    
+    test_glm_plot = df[train.test.split == 2,]
+    predictions_logreg <- predict(classifier_logreg,newdata = test_glm, type = "response")
+    logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
+    logreg_performance = evalmod(mdat = logreg_predict_obj) 
+    
+    svm_df <- fortify(svm2_performance)
+    logreg_df <- fortify(logreg_performance)
+    knn_df <- fortify(knn_performance)
+    xgb_df <- fortify(xgb_performance)
+    
+    
+    svm_df$classifier <- "SVM"
+    logreg_df$classifier <- "LOGIT"
+    knn_df$classifier <- "KNN"
+    xgb_df$classifier <- "XGB"
+    
+    performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
+    
+    roc <- performance_df[performance_df$curvetype == "ROC",]
+    prc <- performance_df[performance_df$curvetype == "PRC",]
+```
+
+
+```{r comparison_ROC, echo=FALSE, fig.align ="center"}
+ggplot() +
+  # green plot
+  geom_line(data=roc, aes(x=x, y=y,colour=classifier)) + 
+  geom_abline(intercept=0, slope=1, linetype = "dashed") +
+  ylab("Sensitivity") +
+  xlab("1-Specificity") +
+  ggtitle("ROC Comparison") +
+  labs(colour = "Type of Model:")
+```
+
+```{r comparison_PRC, echo=FALSE, fig.align ="center"}
+    ggplot() +
+      # green plot
+      geom_line(data=prc, aes(x=x, y=y,colour=classifier)) + 
+      ylab("Precision") +
+      xlab("Recall") +
+      ggtitle("PRC Comparison") +
+      labs(colour = "Type of Model:")
+```
+
+
+# NOTA BENE
+
+## Difference between the RUS training set and the training set
+
+We need to keep in mind that we trained all of our models on the RUS training set, which is about $0.01%$ of the dataset, for computation time sake. However, XGBoost and Logistic Regression handle pretty well bigger sets of data. If we had trained XGBoost and the Logistic Regression on the whole training set, the results are way better in favor of XGBoost and Logistic Regression ! For the others models (SVM and KNN), having them trained on the whole training set doesn't change the results that much.
+
+### Results for the XGBoost trained on the whole training set
+
+```{r xgb_whole_dataset, echo=FALSE, fig.align ="center", message=FALSE, warning=FALSE}
+train_xgb_all = train
+test_xgb_all = test
+train_xgb_all$Class = as.numeric(as.character(train_xgb_all$Class))
+xgb.data.train <- xgb.DMatrix(as.matrix(train_xgb_all[, colnames(train_xgb_all) != "Class"]), label = train_xgb_all$Class)
+xgb.data.test <- xgb.DMatrix(as.matrix(test_xgb_all[, colnames(test_xgb_all) != "Class"]), label = test_xgb_all$Class)
+
+test_xgb_all$Class = as.integer(test_xgb_all$Class)
+
+test_xgb_all$Class[test_xgb_all$Class == 1] = 0
+test_xgb_all$Class[test_xgb_all$Class == 2] = 1
+
+
+
+set.seed(1337)
+xgb.model <- xgb.train(data = xgb.data.train
+                  		, params = list(objective = "binary:logistic"
+                  			, eta = 0.1
+                  			, max.depth = 10
+                  			, min_child_weight = 100
+                  			, subsample = 0.5
+                  			, colsample_bytree = 0.7
+                  			, nthread = 3
+                  			, scale_pos_weight = 577
+                  			, eval_metric = "aucpr"
+                  			)
+                  		, watchlist = list(train = xgb.data.train,test = xgb.data.test1)
+                  		, nrounds = 500
+                  		, early_stopping_rounds = 40
+                  		, print_every_n = 501
+                  		)
+
+test_xgb_all$predicted= predict(xgb.model
+                    , newdata = as.matrix(test_xgb_all[, colnames(test_xgb_all) != "Class"])
+                    , ntreelimit = xgb.model$bestInd)
+```
+
+
+```{r confusion_matrix_xgboost_all, echo=FALSE, fig.align ="center"}
+plot_confusion_matrix(test_xgb_all, "XGBoost using AUCPR as evaluation metric")
+```
+
+```{r roc_auc_xgboost_all, include=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE}
+set.seed(1337)
+test_xgb_plot = df[train.test.split == 2,]
+predictions_xgb= predict(xgb.model
+                         , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
+                         , ntreelimit = xgb.model$bestInd)
+xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
+xgb_performance <- evalmod(xgb_predict_obj)
+
+```
+```{r xgb_2, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(xgb_performance)
+```
+
+### Results for the Logistic Regression trained on the whole training set
+
+```{r glm_all, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+set.seed(1337)
+classifier_logreg <- glm(data = train, family = "binomial",
+                               formula = Class ~ .)
+set.seed(1337)
+test_glm = df[train.test.split == 2,]
+test_glm$Class = as.integer(test_glm$Class)
+test_glm$Class[test_glm$Class == 1] = 0
+test_glm$Class[test_glm$Class == 2] = 1
+predicted = predict(classifier_logreg, newdata = test_glm,type="response")
+test_glm_plot = cbind(test_glm,predicted)
+attach(test_glm_plot)
+
+predictions_logreg <- predict(classifier_logreg,newdata = test_glm, type = "response")
+logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
+logreg_performance <- evalmod(mdat = logreg_predict_obj) 
+
+```
+
+
+```{r confusion_matrix_glm_all, echo=FALSE, fig.align ="center"}
+plot_confusion_matrix(test_glm_plot,"Logistic Regression")
+```
+
+
+```{r glm_plot_all, echo=FALSE, fig.align ="center", results="asis", message=FALSE,warning=FALSE}
+autoplot(logreg_performance)
+```
+
+## Model Comparison for the models trained on the whole training set
+
+
+```{r comparison_ROC1_all, include=FALSE, fig.align ="center", results="asis",message = FALSE, warning=FALSE, echo=FALSE}
+    predictions_svm2 <- predict(classifier,newdata = test_svm_plot, probability=T)
+    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
+    svm2_performance <- evalmod(svm2_predict_obj)
+    
+    test_xgb_plot = df[train.test.split == 2,]
+    predictions_xgb= predict(xgb.model
+                             , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
+                             , ntreelimit = xgb.model$bestInd)
+    xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
+    xgb_performance = evalmod(xgb_predict_obj)
+    
+    test_knn = test
+    predictions_knn <- predict(classifier_knn,newdata = test_knn, type="prob")
+    predictions_knn <- predictions_knn[,"1"]
+    knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
+    knn_performance = evalmod(knn_predict_obj)
+    
+    
+    test_glm_plot = df[train.test.split == 2,]
+    predictions_logreg <- predict(classifier_logreg,newdata = test_glm, type = "response")
+    logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
+    logreg_performance = evalmod(mdat = logreg_predict_obj) 
+    
+    svm_df <- fortify(svm2_performance)
+    logreg_df <- fortify(logreg_performance)
+    knn_df <- fortify(knn_performance)
+    xgb_df <- fortify(xgb_performance)
+    
+    
+    svm_df$classifier <- "SVM"
+    logreg_df$classifier <- "LOGIT"
+    knn_df$classifier <- "KNN"
+    xgb_df$classifier <- "XGB"
+    
+    performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
+    
+    roc <- performance_df[performance_df$curvetype == "ROC",]
+    prc <- performance_df[performance_df$curvetype == "PRC",]
+```
+
+
+
+```{r comparison_ROC_all, echo=FALSE, fig.align ="center"}
+ggplot() +
+  # green plot
+  geom_line(data=roc, aes(x=x, y=y,colour=classifier)) + 
+  geom_abline(intercept=0, slope=1, linetype = "dashed") +
+  ylab("Sensitivity") +
+  xlab("1-Specificity") +
+  ggtitle("ROC Comparison") +
+  labs(colour = "Type of Model:")
+```
+
+```{r comparison_PRC_all, echo=FALSE, fig.align ="center"}
+    ggplot() +
+      # green plot
+      geom_line(data=prc, aes(x=x, y=y,colour=classifier)) + 
+      ylab("Precision") +
+      xlab("Recall") +
+      ggtitle("PRC Comparison") +
+      labs(colour = "Type of Model:")
+```
 
 
 [Master ESA](https://www.univ-orleans.fr/deg/masters/ESA/index.htm)
