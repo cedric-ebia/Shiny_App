@@ -40,7 +40,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-Support vector machines are a set of supervized learning methods that are used for classification analysis. Basically, the idea is, to find a decision boundary to split data in regions corresponding to the classes of our objective variable. The classifier attributes a class to our observation according to the region it is in. 
+Support Vector Machines are a set of supervized learning methods that are used for classification analysis. It has been developed in the 1990's from Vladimir Vapnik's theorical considerations.  
+It has been quickly adopted for its capacity to treat large amount of data, the low number of parameters it requires and the fiability of the results it provides.
+
+Basically, the idea is to find a decision boundary to split data in regions corresponding to the classes of our objective variable. The classifier attributes a class to our observation according to the region it is in. 
 
 ```{r dataviz, echo = FALSE}
 set.seed(12)
@@ -52,22 +55,24 @@ dat <- data.frame(x=x, y=as.factor(y))
 
 
 plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
-text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
+text(dat$x.1,dat$x.2,rownames(dat),col=c("red","green")[dat$y],cex=0.75)
 
 ```
 
 
-# SVM in linear separable cases
+# **SVM in linear separable cases**
 
-Obviously, infinite lines exist to separate our individuals. SVM consists in finding the separating hyperplan that :
- - correctly classify 
- - maximizes the margin
+Obviously, infinite lines exist to separate our individuals. SVM consists in finding the separating hyperplan that :  
+ - classify correcly 
+ - maximize the margin  
 
 ## Separating hyperplan
 
-coming soon
+Let us explain more precisely what an hyperplan is. An hyperplan is defined as a $(n-1)$ dimensional subspace for an $n$ dimensional space. In our case, as we are in a 2-dimensional space, an hyperplan is a line. If we were in a 3-dimensional space (with three variables), an hyperplan would be a plane that would slice a cube.
+
 
 ```{r boundary, echo = FALSE}
+
 
 svmfit <- svm(y~., data = dat, kernel = "linear", scale=F)
 
@@ -76,13 +81,13 @@ beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index])
 beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
 
 plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
-text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
-abline(-beta.0/beta.2, -beta.1/beta.2,col="green") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("red","green")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="blue") 
 ```
 
 ## Margin
 
-In order to choose the best hyperplane, we select the one that maximizes the distance from it to the nearest data point on each side. This optimal decision boundary is called maximum-margin hyperplane, the margin being the distance between the hyperplane and the nearest data points, known as the support vectors.
+There is obviously an infinity numbers of separating hyperplans. In order to choose the best hyperplane, we select the one that maximizes the distance from it to the nearest data point on each side. This optimal decision boundary is called **maximum-margin hyperplane**, the margin being the distance between the hyperplane and the nearest data points, known as the **support vectors**.
 
 ```{r margins, echo = FALSE}
 set.seed(123)
@@ -93,36 +98,84 @@ beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index])
 beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
 
 plot(dat$x.1,dat$x.2,type="n", ylab = "X2", xlab = "X1") 
-text(dat$x.1,dat$x.2,rownames(dat),col=c("blue","red")[dat$y],cex=0.75)
-abline(-beta.0/beta.2, -beta.1/beta.2,col="green")
+text(dat$x.1,dat$x.2,rownames(dat),col=c("red","green")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="blue")
 points(dat$x.1[svmfit$index],dat$x.2[svmfit$index],cex=3,col=rgb(0,0,0))
 abline((-beta.0-1.0)/beta.2,-beta.1/beta.2,col="gray") 
 abline((-beta.0+1.0)/beta.2,-beta.1/beta.2,col="gray") 
 ```
 
-# SVM in non-separable cases
+# **SVM in non-separable cases**
 
-In the previous case, our data was easily linearly separable. But in reality, datasets are almost never linearly separable. That is why it is impossible to obtain a linear frontier that will 100% correctly separate each observations according to the class it belongs to. Then we have to resort to soft margin, authorizing some observations to be misclassified or inside the margin.
+In the previous case, our data was easily linearly separable. But in reality, datasets are almost never linearly separable. That is why it is impossible to obtain a linear frontier that will 100% correctly separate each observations according to the class it belongs to. If that is the case, we have to use **soft margin**, authorizing some observations to be misclassified or to be inside the margin.
 
 ## Soft Margin
 
-For almost linearly separable samples, we introduce slack variables which are variables that allow us to relax the constraint meaning that we no longer will have to correctly and confidently classify every single training point. Then we use a cost hyperparameter that controls how much we penalize our slack variables. This parameter is automatically chosen by cross-validation when computing the corresponding function.
+For almost linearly separable samples, we introduce **slack variables** which are variables that allow us to relax the constraint meaning that we no longer will have to correctly and confidently classify every single training point. Then we use a cost hyperparameter that controls how much we penalize our slack variables.
 
-### Degree of tolerance
+### _Degree of tolerance_
 
-The importance we want to give to misclassifications is represented as the penalty term "C". The bigger the C, the more penalty SVM gets when it makes misclassification.
+The importance we want to give to misclassifications is represented as the **penalty term** "C". The bigger the C, the more penalty SVM gets when it makes misclassification. 
 
-# Kernel trick
+If C is large, the separating hyperplan and margins are chosen in order to minimize the number of observations within the margin. This is explained by a small margin in cases of non-separable data.
+
+```{r large_C, echo = FALSE }
+set.seed(123)
+x <- matrix(rnorm(50*2), ncol = 2)
+y <- c(rep(-1,25), rep(1,25))
+x[y==1,] <- x[y==1,] + 3/2
+dat <- data.frame(x=x, y=as.factor(y))
+
+svmfit <- svm(y~., data = dat, kernel = "linear", scale=F,cost=500)
+
+beta.0 <- -svmfit$rho 
+beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index]) 
+beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
+
+plot(dat$x.1,dat$x.2,type="n", xlab="X1", ylab="X2") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("red","green")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="blue") 
+points(dat$x.1[svmfit$index],dat$x.2[svmfit$index],cex=3,col=rgb(0,0,0))
+abline((-beta.0-1.0)/beta.2,-beta.1/beta.2,col="gray") 
+abline((-beta.0+1.0)/beta.2,-beta.1/beta.2,col="gray") 
+
+``` 
+
+On the contrary, if C is small, separating hyperplan and margins will lead to a larger margins, with more allowed misclassifications, hence more robust.
+
+```{r low_C, echo = FALSE }
+set.seed(123)
+x <- matrix(rnorm(50*2), ncol = 2)
+y <- c(rep(-1,25), rep(1,25))
+x[y==1,] <- x[y==1,] + 3/2
+dat <- data.frame(x=x, y=as.factor(y))
+
+svmfit <- svm(y~., data = dat, kernel = "linear", scale=F,cost=1)
+
+beta.0 <- -svmfit$rho 
+beta.1 <- sum(svmfit$coefs*dat$x.1[svmfit$index]) 
+beta.2 <- sum(svmfit$coefs*dat$x.2[svmfit$index]) 
+
+plot(dat$x.1,dat$x.2,type="n", xlab="X1", ylab="X2") 
+text(dat$x.1,dat$x.2,rownames(dat),col=c("red","green")[dat$y],cex=0.75)
+abline(-beta.0/beta.2, -beta.1/beta.2,col="blue") 
+points(dat$x.1[svmfit$index],dat$x.2[svmfit$index],cex=3,col=rgb(0,0,0))
+abline((-beta.0-1.0)/beta.2,-beta.1/beta.2,col="gray") 
+abline((-beta.0+1.0)/beta.2,-beta.1/beta.2,col="gray") 
+
+``` 
+
+# **Kernel trick**
 
 Most of problems fall under non-linear separation. The Kernel trick rely on the fact that: 
 
-A complex pattern-classication problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space, provided that the space is not densely populated. (T.M. Cover, 1965)  
+"A complex pattern-classication problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space, provided that the space is not densely populated." (T.M. Cover, 1965)  
 
-In order to improve the space of data, we resort to a kernel function that will create new axis by combining existing ones. The kernel function has to respect Mercers theorem conditions and does not require an explicit knowledge of the transformations used to transform the space of data. 
+In order to improve the space of data, we resort to a kernel function that will create new axis by combining existing ones. The kernel function has to respect **Mercers theorem conditions** and does not require an explicit knowledge of the transformations used to transform the space of data.
 
-### Polynomial
+### _Polynomial_
 
-Support vector machine with a polynomial kernel can generate a non-linear decision boundary using those polynomial features. One can choose the number of degrees to apply on the polynomial tranformation to...
+Support Vector Machine with a **polynomial kernel** can generate a non-linear decision boundary using those polynomial features. One can choose the number of degrees of the polynomial kernel, but we usually use two degrees because higher degrees tend to overfit.
 
 ```{r poly, echo = FALSE}
 set.seed(123)
@@ -143,12 +196,13 @@ plot(svmfit, dat, ylab = "X2", xlab = "X1")
 
 ```
 
+On this last plot, individuals marked as "X" are the support vectors. We can note that the margins are clearly more difficult to apprehend than in the linear cases we previously saw.
 
 ## Radial Basis Function (RBF) kernel
 
-The radial basis transformation generates new features by measuring the distance between all other dots to a specific dot. A gamma parameter controls the importance accorded to these new features. The higher the gamma, more wiggling the boundary will be. In other words, a small gamma will give you low bias and high variance while a large gamma will give you higher bias and low variance.
+The **radial basis transformation** generates new features by measuring the distance between all other dots to a specific dot. A **gamma** parameter controls the importance accorded to these new features. The higher the gamma, more wiggling the boundary will be. In other words, a small gamma will give you low bias and high variance while a large gamma will give you higher bias and low variance.
 
-You usually find the best C and Gamma hyper-parameters using Grid-Search.
+You usually find the best C and Gamma hyper-parameters using **Grid-Search**. Grid-searching is the process of scanning the data to configure optimal parameters for a given model.
 
 ```{r rbf, echo = FALSE}
 set.seed(123)
@@ -167,7 +221,45 @@ kernfit <- ksvm(x[train,],y[train], type = "C-svc", kernel = 'rbfdot', C = 1, sc
 plot(kernfit, data = x[train,])
 ```
 
+# **Extensions**
 
+There are some extensions that can be applied on the SVM for some particular cases. We will essentially discuss about its adaptation for multiclass-classification problems.
+
+## SVM multiclass
+
+Multiclass SVM is used to classify among more than two categories. There are two approaches : the _One vs All_ approach and the _One vs One_ approach. The second one is used by R when solving multiclass problems.
+
+### _One against All_
+
+Here the idea is to create one bimodal classifier for each modality the variable can take. Once it is done, the class that responds the best to the criteria (for exemple : the margin) is attributed to the individual.
+
+### _One against One_
+
+Let us assume that our variable has $k$ modalities. With this second approach we consider $k(k-1)/2$ SVM models, one for each possible pair of individuals. Then the appropriate class is found by a voting scheme.
+
+For multiclass problems, the SVM function on R uses this second approach.
+
+```{r multiclass, echo = FALSE}
+set.seed(123)
+x <- matrix(rnorm(200*2), ncol = 2)
+x[1:100,] <- x[1:100,] + 2.5
+x[101:150,] <- x[101:150,] - 2.5
+y <- c(rep(1,150), rep(2,50))
+
+x <- rbind(x, matrix(rnorm(50*2), ncol = 2))
+y <- c(y, rep(0,50))
+x[y==0,2] <- x[y==0,2] + 2.5
+dat <- data.frame(x=x, y=as.factor(y))
+
+svmfit <- svm(y~., data = dat, kernel = "radial", cost = 10, gamma = 1)
+
+plot(svmfit, dat)
+
+```
+
+## Support Vector Regression
+
+SVM methodology can be adapted to regression problem. In other terms, Support Vector Regression may be applied in order to predict quantitative values.
 
 
 

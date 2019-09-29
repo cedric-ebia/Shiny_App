@@ -496,7 +496,6 @@ plot_confusion_matrix(test_xgb1, "XGBoost using AUC as evaluation metric")
 plot_confusion_matrix(test_xgb2, "XGBoost using AUCPR as evaluation metric")
 ```
 
-Ouch
 
 ### _ROC-AUC_
 
