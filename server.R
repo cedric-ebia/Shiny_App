@@ -251,7 +251,6 @@ server <- function(input, output, session) {
   output$conf_svm <- renderPlot({
     
     set.seed(1337)
-    test_svm = df[train.test.split == 2,]
     test_svm$predicted= predict(svm_classifier()
                                 , newdata = as.matrix(test_svm[, colnames(test_svm) != "Class"]),probability=TRUE)
     predictions_svm2 <- predict(svm_classifier(),newdata = test)

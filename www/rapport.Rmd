@@ -657,7 +657,7 @@ ggplot() +
 ```
 
 
-# NOTA BENE
+# **NOTA BENE**
 
 ## Difference between the RUS training set and the training set
 

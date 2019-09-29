@@ -25,12 +25,6 @@ library(rdrop2)
 
 ###### FUNCTIONS ######
 
-customDownloadbutton <- function(outputId, label = "Download"){
-  tags$a(id = outputId, class = "btn btn-default shiny-download-link", href = "", 
-         target = "_blank", download = NA, icon("accessible-icon"), label)
-}
-
-
 plot_confusion_matrix <- function(verset, sSubtitle) {
   tst <- data.frame(round(verset$predicted,0), verset$Class)
   opts <-  c("Predicted", "True")
@@ -178,9 +172,8 @@ test_xgb$Class[test_xgb$Class == 2] = 1
 xgb.data.train <- xgb.DMatrix(as.matrix(train_smote_maison_xgb[, colnames(train_smote_maison_xgb) != "Class"]), label = train_smote_maison_xgb$Class)
 xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
-
-
 test_glm = test
+test_svm = df[train.test.split == 2,]
 
 
 

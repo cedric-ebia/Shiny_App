@@ -2,7 +2,7 @@
 
 # **Support Vector Machine - Project**
 
-Work done by Elie PICAUD and Loïc PALMA for the Spring 2019 class of Big Data Analytics: Support Vector Machine at ESA Master's degree. The instructor was [Christophe Hurlin](https://www.univ-orleans.fr/deg/masters/ESA/CH/churlin.htm).
+Work done by Elie PICAUD and Loïc PALMA for the Autumn 2019 class of Big Data Analytics: Support Vector Machine at ESA Master's degree. The instructor was [Christophe Hurlin](https://www.univ-orleans.fr/deg/masters/ESA/CH/churlin.htm).
 
 The datasets used in this project is **FREE** and can be found [here](https://www.kaggle.com/mlg-ulb/creditcardfraud).
 
