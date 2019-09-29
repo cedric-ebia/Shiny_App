@@ -2,7 +2,7 @@
 header <- dashboardHeader(title = "Support Vector Machine - Credit Fraud",
                           titleWidth = 400,
                           tags$li(a(id = "download", class = "fa fa-download",
-                                    href = "/www/Technical_Manual.pdf", download = "Technical_Manual.pdf"),
+                                    href = "Technical_Manual.pdf", download = "Technical_Manual.pdf"),
                                   class = "dropdown"),
                           tags$li(a(onclick = "onclick =window.open('https://github.com/loicpalma/Shiny_App')",
                                     href = NULL,
