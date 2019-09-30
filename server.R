@@ -358,6 +358,7 @@ server <- function(input, output, session) {
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
     xgb_df = fortify(xgb_performance)
+    xgb_df$classifier <- "XGB"
     saveRDS(xgb_df,"models/xgb_df.rds")
     
     plot(xgb_performance,"ROC")
