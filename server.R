@@ -246,6 +246,7 @@ server <- function(input, output, session) {
   output$plot_PRC_svm <- renderPlot({
     
     set.seed(1337)
+    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
