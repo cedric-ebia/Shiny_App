@@ -216,6 +216,7 @@ server <- function(input, output, session) {
   output$conf_svm <- renderPlot({
     
     set.seed(1337)
+    test_svm = test
     test_svm$predicted= predict(svm_classifier()
                                 , newdata = as.matrix(test_svm[, colnames(test_svm) != "Class"]),probability=TRUE)
     
@@ -231,7 +232,8 @@ server <- function(input, output, session) {
   output$plot_ROC_svm <- renderPlot({
     
     set.seed(1337)
-    test_svm_plot = df[train.test.split == 2,]
+    test_svm = test
+    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
@@ -243,7 +245,7 @@ server <- function(input, output, session) {
   output$plot_PRC_svm <- renderPlot({
     
     set.seed(1337)
-    test_svm_plot = df[train.test.split == 2,]
+    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
@@ -262,6 +264,27 @@ server <- function(input, output, session) {
   
   
   xgb_classifier<- eventReactive(input$go2, {
+    
+    #### COMPUTING CLEAN DATASETS FOR XGB.MATRIX ######
+    set.seed(1337)
+    train_xgb = train
+    test_xgb = test
+    
+    train_xgb$Class = as.factor(train_xgb$Class)
+    test_xgb$Class = as.factor(test_xgb$Class)
+    
+    train_smote_maison_xgb = train_smote_maison
+    train_smote_maison_xgb$Class = as.integer(train_smote_maison_xgb$Class)
+    test_xgb$Class = as.integer(test_xgb$Class)
+    
+    train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 1] = 0
+    train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 2] = 1
+    
+    test_xgb$Class[test_xgb$Class == 1] = 0
+    test_xgb$Class[test_xgb$Class == 2] = 1
+    
+    xgb.data.train <- xgb.DMatrix(as.matrix(train_smote_maison_xgb[, colnames(train_smote_maison_xgb) != "Class"]), label = train_smote_maison_xgb$Class)
+    xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
     
     set.seed(1337)
     xgb.model <- xgb.train(data = xgb.data.train
@@ -291,6 +314,8 @@ server <- function(input, output, session) {
   
   output$Imp_xgb <- renderPlot({
     set.seed(1337)
+    train_xgb = train
+    test_xgb = test
     model <- xgb.dump(xgb_classifier(), with_stats=TRUE)
     names = dimnames(train_xgb)[[2]]
     importance_matrix <- xgb.importance(names, model=xgb_classifier())
@@ -303,6 +328,8 @@ server <- function(input, output, session) {
   output$conf_xgb <- renderPlot({
     
     set.seed(1337)
+    train_xgb = train
+    test_xgb = test
     test_xgb$predicted= predict(xgb_classifier()
                             , newdata = as.matrix(test_xgb[, colnames(test_xgb) != "Class"])
                             , ntreelimit = xgb_classifier()$bestInd)
@@ -317,7 +344,9 @@ server <- function(input, output, session) {
   output$plot_ROC_xgb <- renderPlot({
     
     set.seed(1337)
-    test_xgb_plot = df[train.test.split == 2,]
+    test_xgb_plot = test
+    train_xgb = train
+    test_xgb = test
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
@@ -334,7 +363,9 @@ server <- function(input, output, session) {
     
     
     set.seed(1337)
-    test_xgb_plot = df[train.test.split == 2,]
+    train_xgb = train
+    test_xgb = test
+    test_xgb_plot = test
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
@@ -430,6 +461,7 @@ server <- function(input, output, session) {
   output$conf_logreg <- renderPlot({
     
     set.seed(1337)
+    test_glm = test
     predicted = predict(logreg_classifier(), newdata = test_glm,type="response")
     test_glm_plot = cbind(test_glm,predicted)
     plot_confusion_matrix(test_glm_plot,"Logistic Regression")
@@ -442,7 +474,7 @@ server <- function(input, output, session) {
   output$plot_ROC_logreg <- renderPlot({
     set.seed(1337)
     test_glm = test
-    test_glm_plot = df[train.test.split == 2,]
+    test_glm_plot = test
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
@@ -455,7 +487,8 @@ server <- function(input, output, session) {
   output$plot_PRC_logreg <- renderPlot({
     
     set.seed(1337)
-    test_glm_plot = df[train.test.split == 2,]
+    test_glm = test
+    test_glm_plot = test
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
@@ -469,12 +502,12 @@ server <- function(input, output, session) {
     
     set.seed(1337)
     
-    
+    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_performance <- evalmod(svm_predict_obj)
     
-    test_xgb_plot = df[train.test.split == 2,]
+    test_xgb_plot = test
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
@@ -487,8 +520,7 @@ server <- function(input, output, session) {
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance = evalmod(knn_predict_obj)
     
-    
-    test_glm_plot = df[train.test.split == 2,]
+    test_glm = test
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance = evalmod(mdat = logreg_predict_obj) 
@@ -523,12 +555,12 @@ server <- function(input, output, session) {
     
     set.seed(1337)
     
-    
+    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_performance <- evalmod(svm_predict_obj)
     
-    test_xgb_plot = df[train.test.split == 2,]
+    test_xgb_plot = test
     predictions_xgb= predict(xgb_classifier()
                              , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
                              , ntreelimit = xgb_classifier()$bestInd)
@@ -542,7 +574,7 @@ server <- function(input, output, session) {
     knn_performance = evalmod(knn_predict_obj)
     
     
-    test_glm_plot = df[train.test.split == 2,]
+    test_glm = test
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance = evalmod(mdat = logreg_predict_obj) 
