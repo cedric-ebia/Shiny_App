@@ -232,11 +232,12 @@ server <- function(input, output, session) {
   output$plot_ROC_svm <- renderPlot({
     
     set.seed(1337)
-    test_svm = test
     test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
+    svm_df = fortify(svm_perf)
+    saveRDS(svm_df,"models/svm_df.rds")
     
     plot(svm_perf,"ROC")
   
@@ -245,10 +246,11 @@ server <- function(input, output, session) {
   output$plot_PRC_svm <- renderPlot({
     
     set.seed(1337)
-    test_svm_plot = test
     predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
+    svm_df = fortify(svm_perf)
+    saveRDS(svm_df,"models/svm_df.rds")
     
     plot(svm_perf,"PRC")
     
@@ -352,6 +354,8 @@ server <- function(input, output, session) {
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
+    xgb_df = fortify(xgb_performance)
+    saveRDS(xgb_df,"models/xgb_df.rds")
     
     plot(xgb_performance,"ROC")
     
@@ -371,6 +375,8 @@ server <- function(input, output, session) {
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
+    xgb_df = fortify(xgb_performance)
+    saveRDS(xgb_df,"models/xgb_df.rds")
     
     plot(xgb_performance,"PRC")
     
@@ -418,6 +424,8 @@ server <- function(input, output, session) {
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
+    knn_df = fortify(knn_performance)
+    saveRDS(knn_df,"models/knn_df.rds")
     
     plot(knn_performance, "ROC")
     
@@ -431,6 +439,8 @@ server <- function(input, output, session) {
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
+    knn_df = fortify(knn_performance)
+    saveRDS(knn_df,"models/knn_df.rds")
     
     plot(knn_performance, "PRC")
     
@@ -478,6 +488,8 @@ server <- function(input, output, session) {
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
+    logreg_df = fortify(logreg_performance)
+    saveRDS(logreg_df,"models/logreg_df.rds")
     
     plot(logreg_performance, "ROC")
     
@@ -492,6 +504,9 @@ server <- function(input, output, session) {
     predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
+    logreg_df = fortify(logreg_performance)
+    saveRDS(logreg_df,"models/logreg_df.rds")
+    
     plot(logreg_performance, "PRC")
     
 
@@ -500,35 +515,11 @@ server <- function(input, output, session) {
   
   plot_all_ROCS <- eventReactive(input$go5, {
     
-    set.seed(1337)
     
-    test_svm_plot = test
-    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
-    svm_performance <- evalmod(svm_predict_obj)
-    
-    test_xgb_plot = test
-    predictions_xgb= predict(xgb_classifier()
-                             , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
-                             , ntreelimit = xgb_classifier()$bestInd)
-    xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
-    xgb_performance = evalmod(xgb_predict_obj)
-    
-    test_knn = test
-    predictions_knn <- predict(knn_classifier(),newdata = test_knn, type="prob")
-    predictions_knn <- predictions_knn[,"1"]
-    knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
-    knn_performance = evalmod(knn_predict_obj)
-    
-    test_glm = test
-    predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
-    logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
-    logreg_performance = evalmod(mdat = logreg_predict_obj) 
-    
-    svm_df <- fortify(svm_performance)
-    logreg_df <- fortify(logreg_performance)
-    knn_df <- fortify(knn_performance)
-    xgb_df <- fortify(xgb_performance)
+    svm_df <- readRDS("models/svm_df.rds")
+    logreg_df <- readRDS("models/logreg_df.rds")
+    knn_df <- readRDS("models/knn_df.rds")
+    xgb_df <- readRDS("models/xgb_df.rds")
     
     
     svm_df$classifier <- "SVM"
@@ -555,35 +546,10 @@ server <- function(input, output, session) {
     
     set.seed(1337)
     
-    test_svm_plot = test
-    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
-    svm_performance <- evalmod(svm_predict_obj)
-    
-    test_xgb_plot = test
-    predictions_xgb= predict(xgb_classifier()
-                             , newdata = as.matrix(test_xgb_plot[, colnames(test_xgb_plot) != "Class"])
-                             , ntreelimit = xgb_classifier()$bestInd)
-    xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
-    xgb_performance = evalmod(xgb_predict_obj)
-    
-    test_knn = test
-    predictions_knn <- predict(knn_classifier(),newdata = test_knn, type="prob")
-    predictions_knn <- predictions_knn[,"1"]
-    knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
-    knn_performance = evalmod(knn_predict_obj)
-    
-    
-    test_glm = test
-    predictions_logreg <- predict(logreg_classifier(),newdata = test_glm, type = "response")
-    logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
-    logreg_performance = evalmod(mdat = logreg_predict_obj) 
-    
-    svm_df <- fortify(svm_performance)
-    logreg_df <- fortify(logreg_performance)
-    knn_df <- fortify(knn_performance)
-    xgb_df <- fortify(xgb_performance)
-    
+    svm_df <- readRDS("models/svm_df.rds")
+    logreg_df <- readRDS("models/logreg_df.rds")
+    knn_df <- readRDS("models/knn_df.rds")
+    xgb_df <- readRDS("models/xgb_df.rds")
     
     svm_df$classifier <- "SVM"
     logreg_df$classifier <- "LOGIT"
