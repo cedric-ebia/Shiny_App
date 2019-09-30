@@ -16,9 +16,6 @@ apt_packages:
 r_packages:
   - rsconnect
   - shiny
-  - tidyverse
-  - kableExtra
-  - pROC
   - DT
   - shinydashboard
   - shinyWidgets
@@ -32,10 +29,6 @@ r_packages:
   - caret
   - xgboost
   - corrplot
-  - ISLR
-  - kernlab
-  - stargazer
-  - rdrop2
   
 script:
   - R -f deploy.R
