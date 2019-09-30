@@ -237,6 +237,7 @@ server <- function(input, output, session) {
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
     svm_df = fortify(svm_perf)
+    svm_df$classifier <- "SVM"
     saveRDS(svm_df,"models/svm_df.rds")
     
     plot(svm_perf,"ROC")
@@ -251,6 +252,7 @@ server <- function(input, output, session) {
     svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
     svm_perf <- evalmod(svm_predict_obj)
     svm_df = fortify(svm_perf)
+    svm_df$classifier <- "SVM"
     saveRDS(svm_df,"models/svm_df.rds")
     
     plot(svm_perf,"PRC")
@@ -377,6 +379,7 @@ server <- function(input, output, session) {
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
     xgb_df = fortify(xgb_performance)
+    xgb_df$classifier <- "XGB"
     saveRDS(xgb_df,"models/xgb_df.rds")
     
     plot(xgb_performance,"PRC")
@@ -426,6 +429,7 @@ server <- function(input, output, session) {
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
     knn_df = fortify(knn_performance)
+    knn_df$classifier <- "KNN"
     saveRDS(knn_df,"models/knn_df.rds")
     
     plot(knn_performance, "ROC")
@@ -441,6 +445,7 @@ server <- function(input, output, session) {
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
     knn_df = fortify(knn_performance)
+    knn_df$classifier <- "KNN"
     saveRDS(knn_df,"models/knn_df.rds")
     
     plot(knn_performance, "PRC")
@@ -490,6 +495,7 @@ server <- function(input, output, session) {
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
     logreg_df = fortify(logreg_performance)
+    logreg_df$classifier <- "LOGIT"
     saveRDS(logreg_df,"models/logreg_df.rds")
     
     plot(logreg_performance, "ROC")
@@ -506,6 +512,7 @@ server <- function(input, output, session) {
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance <- evalmod(mdat = logreg_predict_obj) 
     logreg_df = fortify(logreg_performance)
+    logreg_df$classifier <- "LOGIT"
     saveRDS(logreg_df,"models/logreg_df.rds")
     
     plot(logreg_performance, "PRC")
@@ -522,11 +529,6 @@ server <- function(input, output, session) {
     knn_df <- readRDS("models/knn_df.rds")
     xgb_df <- readRDS("models/xgb_df.rds")
     
-    
-    svm_df$classifier <- "SVM"
-    logreg_df$classifier <- "LOGIT"
-    knn_df$classifier <- "KNN"
-    xgb_df$classifier <- "XGB"
     
     performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
     
@@ -551,11 +553,6 @@ server <- function(input, output, session) {
     logreg_df <- readRDS("models/logreg_df.rds")
     knn_df <- readRDS("models/knn_df.rds")
     xgb_df <- readRDS("models/xgb_df.rds")
-    
-    svm_df$classifier <- "SVM"
-    logreg_df$classifier <- "LOGIT"
-    knn_df$classifier <- "KNN"
-    xgb_df$classifier <- "XGB"
     
     performance_df <- rbind(svm_df, logreg_df, knn_df, xgb_df)
     
