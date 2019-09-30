@@ -81,44 +81,6 @@ server <- function(input, output, session) {
     
   })
   
-  output$miss <- renderPrint({
-    if (input$miss == "Yes, please"){
-    nmiss <- function(x) {
-      return(sum(is.na(x)))
-    }
-    apply(df[,c(input$all_var)] ,2,nmiss)
-    }
-    else{
-      print("You don't want to see if there are any missing values")
-    }
-    
-  })
-  
-
-  output$train <- renderPrint({
-  
-    set.seed(1337) 
-    train.test.split <- sample(2
-                               , nrow(df)
-                               , replace = TRUE
-                               , prob = c(as.numeric(input$prop), as.numeric(1-input$prop)))
-    train = df[,c(input$all_var)][train.test.split == 1,]
-    print(nrow(train))
-    
-  })
-  
-  output$test <- renderPrint({
-    
-    set.seed(1337) 
-    train.test.split <- sample(2
-                               , nrow(df)
-                               , replace = TRUE
-                               , prob = c(as.numeric(input$prop), as.numeric(1-input$prop)))
-    test = df[,c(input$all_var)][train.test.split == 2,]
-    print(nrow(test))
-    
-  })
-  
   
   ##### SVM #####
   
