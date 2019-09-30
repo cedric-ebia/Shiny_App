@@ -36,6 +36,9 @@ Basically, there is 9 tabs in our application:
 \item \textbf{"Model Comparison"} : Here you have the summary of all the ROCs and PROCs of the models you have trained. Please be aware that in order this tab to work, you need to have trained all 4 type of models (SVM, XGBoost, KNN and Logistic Regression).
 \end{enumerate}  
 
+&nbsp;  
+&nbsp;  
+&nbsp;  
 
 <center>
 ![Header](header.PNG)
@@ -44,7 +47,16 @@ Basically, there is 9 tabs in our application:
 Apart from the download button, you can find a link to our GitHub repository by clicking on the GitHub icon in the top-right hand corner of the dashboard's header.  
 You will also find a home button. This one will bring you back to the introduction tab.
 \newline
-   
+
+&nbsp;  
+&nbsp;  
+&nbsp; 
+&nbsp;  
+&nbsp;  
+&nbsp; 
+&nbsp;  
+&nbsp;  
+&nbsp; 
  
  
 \textbf{NOTA BENE} : We are using a free version of Shinyapps.io. That is to say the application might be sensible and could \textbf{crash}. This comes from the fact that we are

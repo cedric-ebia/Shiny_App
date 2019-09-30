@@ -6,13 +6,6 @@ server <- function(input, output, session) {
     updateTabItems(session, "sidebar", "foa")
   })
   
-  output$downloadData <- downloadHandler(
-    filename = "Consignes_SVM_2019.pdf",
-    content = function(file) {
-      file.copy("www/Consignes_SVM_2019.pdf", file)
-    })
-  
-  
   histPlot_df <- eventReactive(
     input$submit,
     {
@@ -65,7 +58,20 @@ server <- function(input, output, session) {
       )
     )
   })
+  
+  
+  output$cor <- renderPlot({
+    correlations <- cor(df,method="pearson") 
+    corrplot(correlations, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
+    
+  })
 
+  output$corr_btw_var <- renderPrint({
+    correlations <- cor(df,method="pearson") 
+    print(correlations[input$corr_var_1,input$corr_var_2])
+    
+  })
+  
   output$var <- renderPrint({
    summary(df[[input$var]])
   })
@@ -233,9 +239,7 @@ server <- function(input, output, session) {
                          cost = input$cost_sigmoid) 
         
         
-      } }
-    
-
+      }}
 
   })
   
@@ -253,7 +257,6 @@ server <- function(input, output, session) {
     set.seed(1337)
     test_svm$predicted= predict(svm_classifier()
                                 , newdata = as.matrix(test_svm[, colnames(test_svm) != "Class"]),probability=TRUE)
-    predictions_svm2 <- predict(svm_classifier(),newdata = test)
     
     proba = as.data.frame(attr(test_svm$predicted, "probabilities"))
     test_svm = cbind(test_svm,proba)
@@ -262,52 +265,34 @@ server <- function(input, output, session) {
     
     plot_confusion_matrix(test_svm, "SVM")
     
-    
-    
   })
   
   output$plot_ROC_svm <- renderPlot({
     
     set.seed(1337)
     test_svm_plot = df[train.test.split == 2,]
-    predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    svm2_perfromance <- evalmod(svm2_predict_obj)
+    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
+    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
+    svm_perf <- evalmod(svm_predict_obj)
     
-    curves.svm <- evalmod(svm2_predict_obj)
-    curves.svm.df <- as.data.frame(curves.svm)
-    
-    plot(svm2_perfromance,"ROC")
-    
-    
+    plot(svm_perf,"ROC")
+  
   })
   
   output$plot_PRC_svm <- renderPlot({
     
     set.seed(1337)
     test_svm_plot = df[train.test.split == 2,]
-    predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    svm2_perfromance <- evalmod(svm2_predict_obj)
-    plot(svm2_perfromance,"PRC")
+    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
+    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
+    svm_perf <- evalmod(svm_predict_obj)
     
+    plot(svm_perf,"PRC")
     
   })
   
-  
-  
-  output$cor <- renderPlot({
-  correlations <- cor(df,method="pearson") 
-  corrplot(correlations, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
 
-  
-  })
-  
-  output$corr_btw_var <- renderPrint({
-    correlations <- cor(df,method="pearson") 
-    print(correlations[input$corr_var_1,input$corr_var_2])
-    
-  })
+
   
   
   
@@ -318,9 +303,7 @@ server <- function(input, output, session) {
   xgb_classifier<- eventReactive(input$go2, {
     
     set.seed(1337)
-    
-      
-      xgb.model <- xgb.train(data = xgb.data.train
+    xgb.model <- xgb.train(data = xgb.data.train
                              , params = list(objective = "binary:logistic"
                                              , eta = as.numeric(input$eta)
                                              , max.depth = as.numeric(input$max_depth)
@@ -379,6 +362,7 @@ server <- function(input, output, session) {
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
+    
     plot(xgb_performance,"ROC")
     
     
@@ -395,6 +379,7 @@ server <- function(input, output, session) {
                              , ntreelimit = xgb_classifier()$bestInd)
     xgb_predict_obj <- mmdata(as.numeric(predictions_xgb),test_xgb_plot$Class)
     xgb_performance <- evalmod(xgb_predict_obj)
+    
     plot(xgb_performance,"PRC")
     
     
@@ -417,7 +402,6 @@ server <- function(input, output, session) {
   
   
   output$knn <- renderPrint({
-    
     print(knn_classifier())
     
   })
@@ -442,6 +426,7 @@ server <- function(input, output, session) {
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
+    
     plot(knn_performance, "ROC")
     
     
@@ -454,6 +439,7 @@ server <- function(input, output, session) {
     predictions_knn <- predictions_knn[,"1"]
     knn_predict_obj <- mmdata(as.numeric(predictions_knn),test_knn$Class)
     knn_performance <- evalmod(knn_predict_obj)
+    
     plot(knn_performance, "PRC")
     
     
@@ -523,9 +509,9 @@ server <- function(input, output, session) {
     set.seed(1337)
     
     
-    predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    svm2_performance <- evalmod(svm2_predict_obj)
+    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
+    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
+    svm_performance <- evalmod(svm_predict_obj)
     
     test_xgb_plot = df[train.test.split == 2,]
     predictions_xgb= predict(xgb_classifier()
@@ -546,7 +532,7 @@ server <- function(input, output, session) {
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance = evalmod(mdat = logreg_predict_obj) 
     
-    svm_df <- fortify(svm2_performance)
+    svm_df <- fortify(svm_performance)
     logreg_df <- fortify(logreg_performance)
     knn_df <- fortify(knn_performance)
     xgb_df <- fortify(xgb_performance)
@@ -577,9 +563,9 @@ server <- function(input, output, session) {
     set.seed(1337)
     
     
-    predictions_svm2 <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
-    svm2_predict_obj <- mmdata(as.numeric(predictions_svm2),test_svm_plot$Class)
-    svm2_performance <- evalmod(svm2_predict_obj)
+    predictions_svm <- predict(svm_classifier(),newdata = test_svm_plot, probability=T)
+    svm_predict_obj <- mmdata(as.numeric(predictions_svm),test_svm_plot$Class)
+    svm_performance <- evalmod(svm_predict_obj)
     
     test_xgb_plot = df[train.test.split == 2,]
     predictions_xgb= predict(xgb_classifier()
@@ -600,7 +586,7 @@ server <- function(input, output, session) {
     logreg_predict_obj <- mmdata(predictions_logreg,test_glm$Class)
     logreg_performance = evalmod(mdat = logreg_predict_obj) 
     
-    svm_df <- fortify(svm2_performance)
+    svm_df <- fortify(svm_performance)
     logreg_df <- fortify(logreg_performance)
     knn_df <- fortify(knn_performance)
     xgb_df <- fortify(xgb_performance)

@@ -1,30 +1,34 @@
+
+
+# GLOBAL SETTINGS
+
 set.seed(1337)
 
-library(pROC)
-library(DT)
-library(shiny)
-library(shinydashboard)
-library(shinyWidgets)
-library(tibble)
-library(shinycssloaders)
-library(e1071)
-library(precrec)
-library(ggplot2)
-library(dplyr)
-library(class)
-library(caret)
-library(xgboost)
-library(corrplot)
-library(kernlab)
-library(stargazer)
-library(rdrop2)
 
 
-#token <- readRDS("droptoken.rds")
-#drop_acc(dtoken = token)
+cleanloading = suppressPackageStartupMessages # Suppressing library's warnings/messages
 
-###### FUNCTIONS ######
+cleanloading(library(pROC))
+cleanloading(library(DT))
+cleanloading(library(shiny))
+cleanloading(library(shinydashboard))
+cleanloading(library(shinyWidgets))
+cleanloading(library(tibble))
+cleanloading(library(shinycssloaders))
+cleanloading(library(e1071))
+cleanloading(library(precrec))
+cleanloading(library(ggplot2))
+cleanloading(library(dplyr))
+cleanloading(library(class))
+cleanloading(library(caret))
+cleanloading(library(xgboost))
+cleanloading(library(corrplot))
+cleanloading(library(kernlab))
+cleanloading(library(stargazer))
+cleanloading(library(rdrop2))
 
+
+###### CONFUSION MATRIX FUNCTION ######
 plot_confusion_matrix <- function(verset, sSubtitle) {
   tst <- data.frame(round(verset$predicted,0), verset$Class)
   opts <-  c("Predicted", "True")
@@ -42,7 +46,7 @@ plot_confusion_matrix <- function(verset, sSubtitle) {
 }
 
 
-########################################## 
+###### BETTER SELECTINPUT ######
 df = data.frame(readRDS("df.rds"))
 
 library(tibble)
@@ -83,59 +87,40 @@ my_data <- tribble(
 lapply(split(my_data$cat2, my_data$cat1), as.list)
 
 
-
-
-#### RUS scratch ######
-
-
+#### Random Under Sampling FROM SCRATCH ######
 train.test.split <- sample(2
                            , nrow(df)
                            , replace = TRUE
                            , prob = c(0.7, 0.3))
 train = df[train.test.split == 1,]
-
 test = df[train.test.split == 2,]
-
-
-
 
 train_smote_1 = train %>%
   filter(Class == 1)
-
 train_smote_0 = train %>%
   filter(Class == 0)
-
 train_smote_0 = train_smote_0 %>%
-  sample_n(8*nrow(train_smote_1), replace = FALSE)
+  sample_n(8*nrow(train_smote_1), replace = FALSE) # sample_n() donc aléatoire = OK
 
 train_smote_maison = rbind(train_smote_0,train_smote_1)
-
-
 train_smote_maison$Class = factor(train_smote_maison$Class)
 
 
+
+#### COMPUTING CLASS.WEIGHTS ######
 costs <- table(train_smote_maison$Class)  # the weight vector must be named with the classes names
-costs[1] <- 0.1 # a class 0 mismatch not so much...
 costs[2] <- 0.9 #a class -1 mismatch has a terrible cost
-costs
+costs[1] <- 0.1 # a class 0 mismatch not so much...
 
 
+#### COMPUTING PLOT.SVM ######
 test_svm_plot = df[train.test.split == 2,]
 
 
-#train.test.split <- sample(2
-                           #, nrow(df)
-                           #, replace = TRUE
-                           #, prob = c(0.7, 0.3))
-#train_xgb = df[train.test.split == 1,]
-#test_xgb = df[train.test.split == 2,]
-#xgb.data.train <- xgb.DMatrix(as.matrix(train_xgb[, colnames(train_xgb) != "Class"]), label = train_xgb$Class)
-#xgb.data.test <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
-
-df_xgb = data.frame(readRDS("df.rds"))
+#### COMPUTING CLEAN DATASETS FOR XGB.MATRIX ######
+df_xgb = df
 df_xgb$Class <- factor(df_xgb$Class)
-set.seed(1337) 
 train.test.split <- sample(2
                            , nrow(df_xgb)
                            , replace = TRUE
@@ -143,25 +128,19 @@ train.test.split <- sample(2
 train_xgb = df_xgb[train.test.split == 1,]
 test_xgb = df_xgb[train.test.split == 2,]
 
-
-set.seed(1337)
 train_smote_1 = train_xgb %>%
   filter(Class == 1)
-
 train_smote_0 = train_xgb %>%
   filter(Class == 0)
-
 train_smote_0 = train_smote_0 %>%
   sample_n(8*nrow(train_smote_1), replace = FALSE)
 
 train_smote_maison = rbind(train_smote_0,train_smote_1)
 train_smote_maison$Class = factor(train_smote_maison$Class)
 
-
 train_smote_maison_xgb = train_smote_maison
 train_smote_maison_xgb$Class = as.integer(train_smote_maison_xgb$Class)
 test_xgb$Class = as.integer(test_xgb$Class)
-
 
 train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 1] = 0
 train_smote_maison_xgb$Class[train_smote_maison_xgb$Class == 2] = 1
@@ -172,6 +151,7 @@ test_xgb$Class[test_xgb$Class == 2] = 1
 xgb.data.train <- xgb.DMatrix(as.matrix(train_smote_maison_xgb[, colnames(train_smote_maison_xgb) != "Class"]), label = train_smote_maison_xgb$Class)
 xgb.data.test1 <- xgb.DMatrix(as.matrix(test_xgb[, colnames(test_xgb) != "Class"]), label = test_xgb$Class)
 
+#### CLEAN TEST SETS FOR GLM AND SVM ######
 test_glm = test
 test_svm = df[train.test.split == 2,]
 
