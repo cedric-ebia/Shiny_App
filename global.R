@@ -8,13 +8,13 @@ set.seed(1337)
 
 cleanloading = suppressPackageStartupMessages # Suppressing library's warnings/messages
 
-cleanloading(library(pROC))
+
 cleanloading(library(DT))
 cleanloading(library(shiny))
 cleanloading(library(shinydashboard))
+cleanloading(library(shinycssloaders))
 cleanloading(library(shinyWidgets))
 cleanloading(library(tibble))
-cleanloading(library(shinycssloaders))
 cleanloading(library(e1071))
 cleanloading(library(precrec))
 cleanloading(library(ggplot2))
@@ -23,9 +23,12 @@ cleanloading(library(class))
 cleanloading(library(caret))
 cleanloading(library(xgboost))
 cleanloading(library(corrplot))
-cleanloading(library(kernlab))
-cleanloading(library(stargazer))
-cleanloading(library(rdrop2))
+
+
+#cleanloading(library(pROC))
+#cleanloading(library(kernlab))
+#cleanloading(library(stargazer))
+#cleanloading(library(rdrop2))
 
 
 ###### CONFUSION MATRIX FUNCTION ######
