@@ -1,12 +1,12 @@
-name: Test_Shiny
-title: Test_Shiny
+name: Credit_Fraud_SVM
+title: Credit_Fraud_SVM
 username:
 account: loicpalma
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1162708
 bundleId: 2396995
-url: https://loicpalma.shinyapps.io/Test_Shiny/
+url: https://loicpalma.shinyapps.io/Credit_Fraud_SVM/
 when: 1567955265.98062
 asMultiple: FALSE
 asStatic: FALSE
