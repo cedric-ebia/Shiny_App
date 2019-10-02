@@ -31,7 +31,7 @@ Basically, there is 9 tabs in our application:
 \begin{enumerate}
 \item \textbf{"A little Introduction"} : Here you can find information about the authors as well as where to find the datasets in case you want to try it.
 \item \textbf{"How to SVM 101"} : Here is a little introduction about Support Vector Machine, explaining briefly what is a SVM, the different types of SVM, the different types of kernel, what is the "kernel trick" as well as the different kernels that exists.
-\item \textbf{"Our Analysis"} : Here is what we have done on our side. We explained the basics (recall, precision, confusion matrix, ROC and so on).  We tried to fit the best models for each algorithms that we implemented, showing the results and briefly conclude with a model comparison. We also discuss the limits of doing Random Under Sampling on our datasets by doing a comparison with algorithms that are being trained on the whole training set.
+\item \textbf{"Our Analysis"} : Here is what we have done on our side. We explained the basics (recall, precision, confusion matrix, ROC and so on).  We tried to fit the best models for each algorithms that we implemented, showing the results and briefly conclude with a model comparison. We also discuss the limits of doing Random Under Sampling on our datasets by doing a comparison with algorithms that are being trained on the whole training set. \textbf{If you have troubleshootings rendering \LaTeX  formulas, please check your navigator's cache.}
 \item \textbf{"Data Explanatory"} : Here you can play around with the data. The first box is meant to show a few observations with all the variables so you can have a look at what the variables looks like. Then on the other boxes, you can have some simple and basics informations about a variable. At the end, you get the correlation matrix between all the variables.
 \item \textbf{"SVM"} : Here is the first tab where you can fit a model to our training set. For instance, you can fit a SVM model by choosing all the parameters and hyperparameters that are explained in the "How to SVM 101" tab.
 \item \textbf{"XGBoost"} : Here you can fit a XGBoost model. If you want more details about XGBoost please follow this \href{https://xgboost.readthedocs.io/en/latest/tutorials/model.html}{link}. It is worth mentionning that XGBoost is widely used and is a really popular tool among Kaggle competitors and Data Scientists in industry. More details about the parameters/hyperparameters can be found \href{https://cran.r-project.org/web/packages/xgboost/xgboost.pdf}{here}.
@@ -48,7 +48,7 @@ Basically, there is 9 tabs in our application:
 ![Header](header.PNG)
 </center>
 
-Apart from the download button, you can find a link to our GitHub repository by clicking on the GitHub icon in the top-right hand corner of the dashboard's header.  
+Apart from the download button, you can find a link to our \href{https://github.com/loicpalma/Shiny_App}{GitHub repository} by clicking on the GitHub icon in the top-right hand corner of the dashboard's header.  
 You will also find a home button. This one will bring you back to the introduction tab.
 \newline
 
@@ -56,8 +56,6 @@ You will also find a home button. This one will bring you back to the introducti
 &nbsp;  
 &nbsp; 
 &nbsp;  
-&nbsp;  
-&nbsp; 
  
  
 \textbf{NOTA BENE} : We are using a free version of Shinyapps.io. That is to say the application might be sensible and could \textbf{crash}. This comes from the fact that we are
